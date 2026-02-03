@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jugend gründet - Experiment Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="logo">
+                <span class="logo-icon">🧪</span>
+                <h1>JG Tracker</h1>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item active" data-view="dashboard">
+                    <span class="nav-icon">📊</span>
+                    Dashboard
+                </li>
+                <li class="nav-item" data-view="new-run">
+                    <span class="nav-icon">➕</span>
+                    Neuer Versuch
+                </li>
+                <li class="nav-item" data-view="runs">
+                    <span class="nav-icon">📋</span>
+                    Alle Versuche
+                </li>
+                <li class="nav-item" data-view="analysis">
+                    <span class="nav-icon">📈</span>
+                    Analyse
+                </li>
+                <li class="nav-item" data-view="export">
+                    <span class="nav-icon">💾</span>
+                    Export
+                </li>
+                <li class="nav-item" data-view="guide">
+                    <span class="nav-icon">📖</span>
+                    Anleitung
+                </li>
+            </ul>
+            <div class="sidebar-footer">
+                <button id="reset-data" class="btn-danger-small">🗑️ Daten zurücksetzen</button>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard View -->
+            <section id="dashboard-view" class="view active">
+                <header class="view-header">
+                    <h2>📊 Dashboard</h2>
+                    <p class="subtitle">Übersicht deiner Experimente</p>
+                </header>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-icon">🔬</span>
+                        <div class="stat-info">
+                            <span class="stat-value" id="total-runs">0</span>
+                            <span class="stat-label">Versuche gesamt</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-icon">✅</span>
+                        <div class="stat-info">
+                            <span class="stat-value" id="completed-runs">0</span>
+                            <span class="stat-label">Abgeschlossen</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-icon">🏆</span>
+                        <div class="stat-info">
+                            <span class="stat-value" id="best-bsc">-</span>
+                            <span class="stat-label">Beste BSC</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-icon">📈</span>
+                        <div class="stat-info">
+                            <span class="stat-value" id="avg-bsc">-</span>
+                            <span class="stat-label">Ø BSC</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-content">
+                    <div class="card">
+                        <h3>🎯 Versuchsplan Fortschritt</h3>
+                        <div class="progress-list" id="experiment-progress">
+                            <!-- Wird dynamisch gefüllt -->
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <h3>📋 Letzte Aktivitäten</h3>
+                        <div class="activity-list" id="recent-activity">
+                            <p class="empty-state">Noch keine Versuche durchgeführt</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="quick-actions">
+                    <button class="btn-primary" onclick="showView('new-run')">
+                        ➕ Neuen Versuch starten
+                    </button>
+                    <button class="btn-secondary" onclick="showView('guide')">
+                        📖 Anleitung lesen
+                    </button>
+                </div>
+            </section>
+
+            <!-- New Run View -->
+            <section id="new-run-view" class="view">
+                <header class="view-header">
+                    <h2>➕ Neuer Versuch</h2>
+                    <p class="subtitle">Wähle einen vordefinierten Versuch oder erstelle einen eigenen</p>
+                </header>
+
+                <div class="run-selector">
+                    <h3>📋 Vordefinierte Versuche (empfohlen)</h3>
+                    <div class="predefined-runs" id="predefined-runs">
+                        <!-- Wird dynamisch gefüllt -->
+                    </div>
+                </div>
+
+                <div class="custom-run-section">
+                    <button class="btn-outline" id="toggle-custom">
+                        ⚙️ Eigenen Versuch erstellen
+                    </button>
+                    <div id="custom-run-form" class="hidden">
+                        <div class="form-group">
+                            <label>Versuchsname</label>
+                            <input type="text" id="custom-run-name" placeholder="z.B. Mein Test 1">
+                        </div>
+                        <div class="form-group">
+                            <label>Beschreibung / Hypothese</label>
+                            <textarea id="custom-run-desc" placeholder="Was testest du?"></textarea>
+                        </div>
+                        <button class="btn-primary" onclick="createCustomRun()">
+                            Versuch erstellen
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Active Run View (Phaseneingabe) -->
+            <section id="active-run-view" class="view">
+                <header class="view-header">
+                    <div class="run-header-info">
+                        <h2 id="active-run-title">Versuch 1: Baseline</h2>
+                        <span class="phase-badge" id="current-phase-badge">Phase 1/8</span>
+                    </div>
+                    <p class="subtitle" id="active-run-desc">Referenzpunkt etablieren</p>
+                </header>
+
+                <div class="phase-navigation">
+                    <div class="phase-tabs" id="phase-tabs">
+                        <!-- Wird dynamisch gefüllt -->
+                    </div>
+                </div>
+
+                <div class="phase-content" id="phase-content">
+                    <!-- Wird dynamisch gefüllt -->
+                </div>
+
+                <div class="phase-actions">
+                    <button class="btn-secondary" id="prev-phase-btn" onclick="previousPhase()">
+                        ← Vorherige Phase
+                    </button>
+                    <button class="btn-primary" id="save-phase-btn" onclick="saveCurrentPhase()">
+                        💾 Phase speichern
+                    </button>
+                    <button class="btn-primary" id="next-phase-btn" onclick="nextPhase()">
+                        Nächste Phase →
+                    </button>
+                </div>
+            </section>
+
+            <!-- All Runs View -->
+            <section id="runs-view" class="view">
+                <header class="view-header">
+                    <h2>📋 Alle Versuche</h2>
+                    <p class="subtitle">Übersicht und Verwaltung aller durchgeführten Versuche</p>
+                </header>
+
+                <div class="runs-list" id="runs-list">
+                    <p class="empty-state">Noch keine Versuche vorhanden</p>
+                </div>
+            </section>
+
+            <!-- Analysis View -->
+            <section id="analysis-view" class="view">
+                <header class="view-header">
+                    <h2>📈 Analyse</h2>
+                    <p class="subtitle">Vergleiche und Erkenntnisse aus deinen Versuchen</p>
+                </header>
+
+                <div class="analysis-content">
+                    <div class="card">
+                        <h3>🏆 BSC Ranking</h3>
+                        <div id="bsc-ranking">
+                            <p class="empty-state">Mindestens 1 abgeschlossener Versuch benötigt</p>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>📊 Parameter-Vergleich</h3>
+                        <div id="parameter-comparison">
+                            <p class="empty-state">Mindestens 2 abgeschlossene Versuche benötigt</p>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>💡 Erkenntnisse</h3>
+                        <div id="insights">
+                            <p class="empty-state">Führe mehr Versuche durch für automatische Erkenntnisse</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Export View -->
+            <section id="export-view" class="view">
+                <header class="view-header">
+                    <h2>💾 Export</h2>
+                    <p class="subtitle">Exportiere deine Daten für weitere Analyse</p>
+                </header>
+
+                <div class="export-options">
+                    <div class="export-card" onclick="exportCSV()">
+                        <span class="export-icon">📄</span>
+                        <h3>CSV Export</h3>
+                        <p>Für Excel, Google Sheets oder Python/R Analyse</p>
+                    </div>
+                    <div class="export-card" onclick="exportJSON()">
+                        <span class="export-icon">🔧</span>
+                        <h3>JSON Export</h3>
+                        <p>Vollständiger Datenexport inkl. aller Metadaten</p>
+                    </div>
+                    <div class="export-card" onclick="exportPythonReady()">
+                        <span class="export-icon">🐍</span>
+                        <h3>Python-Ready CSV</h3>
+                        <p>Optimiert für Gaussian Process / SHAP Analyse</p>
+                    </div>
+                </div>
+
+                <div class="card mt-4">
+                    <h3>📥 Import</h3>
+                    <p>Lade zuvor exportierte Daten wieder ein</p>
+                    <input type="file" id="import-file" accept=".json" onchange="importData(event)">
+                    <label for="import-file" class="btn-secondary mt-2">
+                        📂 JSON Datei auswählen
+                    </label>
+                </div>
+            </section>
+
+            <!-- Guide View -->
+            <section id="guide-view" class="view">
+                <header class="view-header">
+                    <h2>📖 Anleitung</h2>
+                    <p class="subtitle">So führst du die Experimente durch</p>
+                </header>
+
+                <div class="guide-content">
+                    <div class="guide-section">
+                        <h3>🎯 Experimentplan Übersicht</h3>
+                        <div class="experiment-overview">
+                            <div class="experiment-phase">
+                                <h4>Phase 1: Screening (Versuche 1-3)</h4>
+                                <ul>
+                                    <li><strong>Versuch 1 - Baseline:</strong> Goldener Mittelweg, Referenzpunkt</li>
+                                    <li><strong>Versuch 2 - High-All:</strong> Aggressive Expansion, obere Grenzen</li>
+                                    <li><strong>Versuch 3 - Low-All:</strong> Lean Bootstrap, untere Grenzen</li>
+                                </ul>
+                            </div>
+                            <div class="experiment-phase">
+                                <h4>Phase 2: Interaktionstests (Versuche 4-8)</h4>
+                                <ul>
+                                    <li><strong>Versuch 4:</strong> Preis × Werbung (beides hoch)</li>
+                                    <li><strong>Versuch 5:</strong> Preis niedrig × Werbung hoch</li>
+                                    <li><strong>Versuch 6:</strong> Developer × Process Opt (beides hoch)</li>
+                                    <li><strong>Versuch 7:</strong> Developer hoch, Process Opt niedrig</li>
+                                    <li><strong>Versuch 8:</strong> Sales × Werbung (beides hoch)</li>
+                                </ul>
+                            </div>
+                            <div class="experiment-phase">
+                                <h4>Phase 3: Kategoriale Tests (Versuch 9)</h4>
+                                <ul>
+                                    <li><strong>Versuch 9:</strong> Strategic Decisions Sweep</li>
+                                </ul>
+                            </div>
+                            <div class="experiment-phase">
+                                <h4>Phase 4: Optimierung (Versuch 10)</h4>
+                                <ul>
+                                    <li><strong>Versuch 10:</strong> Beste Erkenntnisse kombinieren</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="guide-section">
+                        <h3>📝 So benutzt du den Tracker</h3>
+                        <ol class="guide-steps">
+                            <li>
+                                <strong>Versuch auswählen:</strong>
+                                Gehe zu "Neuer Versuch" und wähle einen der vordefinierten Versuche. Die Parameter sind bereits optimal eingestellt!
+                            </li>
+                            <li>
+                                <strong>Phase für Phase:</strong>
+                                Gib die vorgeschlagenen Werte in das Planspiel ein. Die grünen Felder zeigen dir die empfohlenen Werte.
+                            </li>
+                            <li>
+                                <strong>Ergebnisse eintragen:</strong>
+                                Nach jeder Phase im Planspiel: Trage die BSC-Werte in den Ergebnis-Bereich ein.
+                            </li>
+                            <li>
+                                <strong>Speichern nicht vergessen:</strong>
+                                Klicke nach jeder Phase auf "Phase speichern"!
+                            </li>
+                            <li>
+                                <strong>Analysieren:</strong>
+                                Nach mehreren Versuchen siehst du unter "Analyse" automatische Erkenntnisse.
+                            </li>
+                        </ol>
+                    </div>
+
+                    <div class="guide-section">
+                        <h3>💡 Tipps</h3>
+                        <ul class="tips-list">
+                            <li>Führe Versuche 1-3 zuerst durch - sie sind unabhängig voneinander</li>
+                            <li>Die vorgegebenen Werte sind wissenschaftlich optimiert</li>
+                            <li>Exportiere regelmäßig deine Daten als Backup</li>
+                            <li>Notiere Beobachtungen im Notizfeld jeder Phase</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal für Ergebnis-Eingabe -->
+    <div id="results-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3>📊 Ergebnisse Phase <span id="modal-phase-num"></span></h3>
+            <p class="modal-subtitle">Trage die BSC-Werte aus dem Planspiel ein</p>
+            
+            <div class="results-form">
+                <div class="result-row">
+                    <label>BSC Gesamt</label>
+                    <input type="number" id="result-bsc-total" placeholder="z.B. 1850">
+                </div>
+                <div class="result-row">
+                    <label>Innovation</label>
+                    <input type="number" id="result-innovation" placeholder="z.B. 365">
+                </div>
+                <div class="result-row">
+                    <label>Social Impact</label>
+                    <input type="number" id="result-social" placeholder="z.B. 298">
+                </div>
+                <div class="result-row">
+                    <label>Umsatzrendite</label>
+                    <input type="number" id="result-profit-margin" placeholder="z.B. 420">
+                </div>
+                <div class="result-row">
+                    <label>Nachhaltigkeit</label>
+                    <input type="number" id="result-sustainability" placeholder="z.B. 315">
+                </div>
+                <div class="result-row">
+                    <label>Arbeitsplätze</label>
+                    <input type="number" id="result-jobs" placeholder="z.B. 180">
+                </div>
+                <div class="result-row">
+                    <label>Planungsgenauigkeit</label>
+                    <input type="number" id="result-planning" placeholder="z.B. 272">
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="closeResultsModal()">Abbrechen</button>
+                <button class="btn-primary" onclick="saveResults()">💾 Speichern</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
