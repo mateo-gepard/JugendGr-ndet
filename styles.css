@@ -438,6 +438,50 @@ body {
 .run-type.interaction { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
 .run-type.strategic { background: rgba(16, 185, 129, 0.2); color: var(--success); }
 .run-type.optimization { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+.run-type.edge { background: rgba(255, 152, 0, 0.2); color: #FF9800; }
+
+/* ===== Experiment Phase Groups ===== */
+.experiment-phase-group {
+    margin-bottom: 32px;
+}
+
+.phase-group-title {
+    font-size: 1.1rem;
+    margin-bottom: 16px;
+    color: var(--text-primary);
+}
+
+.phase-runs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.run-card.in-progress {
+    border-color: var(--warning);
+}
+
+.run-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.status-badge {
+    font-size: 0.8rem;
+    padding: 2px 8px;
+    border-radius: 12px;
+}
+
+.status-badge.completed {
+    background: var(--success);
+    color: white;
+}
+
+.status-badge.progress {
+    background: var(--warning);
+    color: black;
+}
 
 /* ===== Custom Run Section ===== */
 .custom-run-section {
@@ -599,6 +643,16 @@ body {
     font-size: 0.75rem;
     color: var(--success);
     margin-top: 6px;
+}
+
+.param-range {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+    background: var(--bg-card);
+    padding: 3px 6px;
+    border-radius: 4px;
+    text-align: center;
 }
 
 .param-input.disabled {

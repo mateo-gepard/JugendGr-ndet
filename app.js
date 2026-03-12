@@ -126,25 +126,69 @@ function updateDashboard() {
 // ===== PREDEFINED RUNS =====
 function initPredefinedRuns() {
     const container = document.getElementById('predefined-runs');
-    container.innerHTML = PREDEFINED_RUNS.map(run => {
-        const existing = appState.runs.find(r => r.predefinedId === run.id);
-        const isCompleted = existing && isRunCompleted(existing);
-        const typeLabels = {
-            screening: 'Screening',
-            interaction: 'Interaktionstest',
-            strategic: 'Strategisch',
-            optimization: 'Optimierung'
-        };
-        
-        return `
-            <div class="run-card ${isCompleted ? 'completed' : ''}" 
-                 onclick="startPredefinedRun(${run.id})">
-                <h4>${run.name}</h4>
-                <p>${run.description}</p>
-                <span class="run-type ${run.type}">${typeLabels[run.type]}</span>
-            </div>
-        `;
-    }).join('');
+    
+    // Gruppiere nach Design-Phasen
+    const typeLabels = {
+        screening: '🔬 Screening',
+        interaction: '🔗 Interaktion',
+        strategic: '♟️ Strategisch',
+        edge: '📊 Randwert',
+        optimization: '🎯 Optimierung'
+    };
+    
+    // Gruppiere Runs nach Phase
+    let html = '';
+    if (typeof EXPERIMENT_DESIGN !== 'undefined') {
+        EXPERIMENT_DESIGN.phases.forEach(phase => {
+            const phaseRuns = PREDEFINED_RUNS.filter(r => phase.runs.includes(r.id));
+            html += `
+                <div class="experiment-phase-group">
+                    <h4 class="phase-group-title" style="border-left: 4px solid ${phase.color}; padding-left: 12px;">
+                        ${phase.name} <span style="font-weight: 400; color: var(--text-muted);">(${phase.goal})</span>
+                    </h4>
+                    <div class="phase-runs-grid">
+            `;
+            
+            phaseRuns.forEach(run => {
+                const existing = appState.runs.find(r => r.predefinedId === run.id);
+                const isCompleted = existing && isRunCompleted(existing);
+                const isInProgress = existing && !isCompleted;
+                
+                html += `
+                    <div class="run-card ${isCompleted ? 'completed' : ''} ${isInProgress ? 'in-progress' : ''}" 
+                         onclick="startPredefinedRun(${run.id})"
+                         style="border-top: 3px solid ${phase.color};">
+                        <div class="run-card-header">
+                            <h4>${run.name}</h4>
+                            ${isCompleted ? '<span class="status-badge completed">✓</span>' : ''}
+                            ${isInProgress ? '<span class="status-badge progress">⏳</span>' : ''}
+                        </div>
+                        <p>${run.description}</p>
+                        <span class="run-type ${run.type}">${typeLabels[run.type] || run.type}</span>
+                    </div>
+                `;
+            });
+            
+            html += '</div></div>';
+        });
+    } else {
+        // Fallback für alte Struktur
+        html = PREDEFINED_RUNS.map(run => {
+            const existing = appState.runs.find(r => r.predefinedId === run.id);
+            const isCompleted = existing && isRunCompleted(existing);
+            
+            return `
+                <div class="run-card ${isCompleted ? 'completed' : ''}" 
+                     onclick="startPredefinedRun(${run.id})">
+                    <h4>${run.name}</h4>
+                    <p>${run.description}</p>
+                    <span class="run-type ${run.type}">${typeLabels[run.type] || run.type}</span>
+                </div>
+            `;
+        }).join('');
+    }
+    
+    container.innerHTML = html;
 }
 
 function startPredefinedRun(predefinedId) {
@@ -243,6 +287,7 @@ function renderPhaseContent() {
     const run = appState.activeRun;
     const phase = appState.activePhase;
     const phaseData = run.phases[phase];
+    const phaseLimits = PHASE_LIMITS[phase];
     
     const container = document.getElementById('phase-content');
     
@@ -256,22 +301,31 @@ function renderPhaseContent() {
             <div class="param-grid">
     `;
     
-    const params = ['developers', 'processOpt', 'salesStaff', 'advertising', 'priceM1', 'qtyM1', 'priceM2', 'qtyM2'];
+    const params = ['developers', 'processOpt', 'salesStaff', 'advertising', 'priceM1', 'qtyM1', 'priceM2', 'qtyM2', 'marketResearch'];
     
     params.forEach(param => {
         const isAvailable = PARAM_AVAILABILITY[param]?.includes(phase);
+        const limits = phaseLimits?.[param];
         const value = phaseData.params[param];
         const hasRecommendation = value !== null && value !== undefined;
         
+        // Min/Max Anzeige
+        let minMaxHint = '';
+        if (limits && isAvailable) {
+            minMaxHint = `<div class="param-range">Min: ${formatNumber(limits.min)} | Max: ${formatNumber(limits.max)}</div>`;
+        }
+        
         paramsHTML += `
             <div class="param-input ${hasRecommendation ? 'recommended' : ''} ${!isAvailable ? 'disabled' : ''}">
-                <label>${PARAM_LABELS[param]}</label>
+                <label>${PARAM_LABELS[param] || param}</label>
                 <input type="number" 
                        id="param-${param}"
                        value="${value ?? ''}"
                        ${!isAvailable ? 'disabled' : ''}
+                       ${limits ? `min="${limits.min}" max="${limits.max}"` : ''}
                        placeholder="${!isAvailable ? 'Nicht verfügbar' : 'Wert eingeben'}"
                        onchange="updateParam('${param}', this.value)">
+                ${minMaxHint}
                 ${hasRecommendation ? `<div class="param-hint">✓ Empfohlen: ${formatNumber(value)}</div>` : ''}
             </div>
         `;
