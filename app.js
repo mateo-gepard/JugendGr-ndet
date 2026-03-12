@@ -1,11 +1,12 @@
-// ===== APP STATE =====
+// JUGEND GRUENDET - EXPERIMENT TRACKER v2.0
+
 let appState = {
     runs: [],
     activeRun: null,
-    activePhase: 1
+    activePhase: 1,
+    analysisCache: null
 };
 
-// ===== INITIALIZATION =====
 document.addEventListener('DOMContentLoaded', () => {
     loadState();
     initNavigation();
@@ -15,178 +16,183 @@ document.addEventListener('DOMContentLoaded', () => {
     initResetButton();
 });
 
-// ===== LOCAL STORAGE =====
 function loadState() {
-    const saved = localStorage.getItem('jg_experiment_data');
+    const saved = localStorage.getItem('jg_experiment_data_v2');
     if (saved) {
         appState = JSON.parse(saved);
     }
 }
 
 function saveState() {
-    localStorage.setItem('jg_experiment_data', JSON.stringify(appState));
+    localStorage.setItem('jg_experiment_data_v2', JSON.stringify(appState));
 }
 
-// ===== NAVIGATION =====
 function initNavigation() {
     document.querySelectorAll('.nav-item').forEach(item => {
         item.addEventListener('click', () => {
             const view = item.dataset.view;
             showView(view);
-            
-            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-            item.classList.add('active');
         });
     });
 }
 
 function showView(viewName) {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-    const view = document.getElementById(`${viewName}-view`);
-    if (view) {
-        view.classList.add('active');
-    }
+    const view = document.getElementById(viewName + '-view');
+    if (view) view.classList.add('active');
     
-    // Update nav
     document.querySelectorAll('.nav-item').forEach(item => {
         item.classList.toggle('active', item.dataset.view === viewName);
     });
     
-    // Refresh content based on view
     if (viewName === 'dashboard') updateDashboard();
     if (viewName === 'runs') updateRunsList();
     if (viewName === 'analysis') updateAnalysis();
     if (viewName === 'new-run') initPredefinedRuns();
 }
 
-// ===== DASHBOARD =====
+function generateId() {
+    return 'run_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+}
+
+function formatNumber(num) {
+    if (num === null || num === undefined) return '-';
+    return new Intl.NumberFormat('de-DE').format(num);
+}
+
+function formatRelativeTime(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = Math.floor((now - date) / 1000);
+    
+    if (diff < 60) return 'Gerade eben';
+    if (diff < 3600) return 'Vor ' + Math.floor(diff / 60) + ' Min';
+    if (diff < 86400) return 'Vor ' + Math.floor(diff / 3600) + ' Std';
+    return 'Vor ' + Math.floor(diff / 86400) + ' Tagen';
+}
+
+function isRunCompleted(run) {
+    return run.phases[8] && run.phases[8].completed && run.phases[8].results && run.phases[8].results.bscTotal;
+}
+
+function getLastCompletedPhase(run) {
+    for (let p = 8; p >= 1; p--) {
+        if (run.phases[p] && run.phases[p].completed) return p;
+    }
+    return 0;
+}
+
+function getCompletedRunsCount() {
+    return appState.runs.filter(r => isRunCompleted(r)).length;
+}
+
 function updateDashboard() {
-    // Stats
     const totalRuns = appState.runs.length;
     const completedRuns = appState.runs.filter(r => isRunCompleted(r)).length;
     const allBSC = appState.runs
-        .filter(r => r.phases[8]?.results?.bscTotal)
+        .filter(r => r.phases[8] && r.phases[8].results && r.phases[8].results.bscTotal)
         .map(r => r.phases[8].results.bscTotal);
     
     document.getElementById('total-runs').textContent = totalRuns;
     document.getElementById('completed-runs').textContent = completedRuns;
-    document.getElementById('best-bsc').textContent = allBSC.length > 0 ? Math.max(...allBSC) : '-';
+    document.getElementById('best-bsc').textContent = allBSC.length > 0 ? Math.max.apply(null, allBSC) : '-';
     document.getElementById('avg-bsc').textContent = allBSC.length > 0 ? 
         Math.round(allBSC.reduce((a, b) => a + b, 0) / allBSC.length) : '-';
     
-    // Experiment Progress
     const progressList = document.getElementById('experiment-progress');
-    progressList.innerHTML = PREDEFINED_RUNS.map(predefined => {
-        const run = appState.runs.find(r => r.predefinedId === predefined.id);
-        let status = 'pending';
-        let statusText = 'Ausstehend';
-        
-        if (run) {
-            if (isRunCompleted(run)) {
-                status = 'completed';
-                statusText = 'Abgeschlossen';
-            } else {
-                status = 'in-progress';
-                const lastPhase = getLastCompletedPhase(run);
-                statusText = `Phase ${lastPhase}/8`;
-            }
-        }
-        
-        return `
-            <div class="progress-item ${status}">
-                <span>${predefined.name}</span>
-                <span class="progress-status ${status}">${statusText}</span>
-            </div>
-        `;
-    }).join('');
+    let progressHTML = '';
     
-    // Recent Activity
+    EXPERIMENT_DESIGN.phases.forEach(phase => {
+        const phaseRuns = phase.runs.map(id => PREDEFINED_RUNS.find(r => r.id === id));
+        let completed = 0;
+        phaseRuns.forEach(pr => {
+            const run = appState.runs.find(r => r.predefinedId === pr.id);
+            if (run && isRunCompleted(run)) completed++;
+        });
+        
+        const total = phaseRuns.length;
+        const percentage = Math.round((completed / total) * 100);
+        
+        progressHTML += '<div class="progress-phase-item">' +
+            '<div class="progress-phase-header">' +
+            '<span class="progress-phase-name" style="color: ' + phase.color + '">' + phase.name + '</span>' +
+            '<span class="progress-phase-count">' + completed + '/' + total + '</span>' +
+            '</div>' +
+            '<div class="progress-bar-container">' +
+            '<div class="progress-bar-fill" style="width: ' + percentage + '%; background: ' + phase.color + '"></div>' +
+            '</div>' +
+            '<div class="progress-phase-goal">' + phase.goal + '</div>' +
+            '</div>';
+    });
+    progressList.innerHTML = progressHTML;
+    
     const activityList = document.getElementById('recent-activity');
-    const recentRuns = [...appState.runs]
-        .sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt))
-        .slice(0, 5);
+    const recentRuns = appState.runs.slice().sort((a, b) => 
+        new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt)
+    ).slice(0, 5);
     
     if (recentRuns.length === 0) {
         activityList.innerHTML = '<p class="empty-state">Noch keine Versuche durchgeführt</p>';
     } else {
-        activityList.innerHTML = recentRuns.map(run => {
+        let html = '';
+        recentRuns.forEach(run => {
             const time = formatRelativeTime(run.updatedAt || run.createdAt);
             const phase = getLastCompletedPhase(run);
-            return `
-                <div class="activity-item" onclick="openRun('${run.id}')">
-                    <span>📋 ${run.name}</span>
-                    <span>Phase ${phase}/8</span>
-                    <span class="activity-time">${time}</span>
-                </div>
-            `;
-        }).join('');
+            const bsc = run.phases[8] && run.phases[8].results ? run.phases[8].results.bscTotal : null;
+            html += '<div class="activity-item" onclick="openRun(\'' + run.id + '\')">' +
+                '<span class="activity-name">' + run.name + '</span>' +
+                '<span class="activity-phase">Phase ' + phase + '/8' + (bsc ? ' - ' + bsc + ' BSC' : '') + '</span>' +
+                '<span class="activity-time">' + time + '</span>' +
+                '</div>';
+        });
+        activityList.innerHTML = html;
     }
 }
 
-// ===== PREDEFINED RUNS =====
 function initPredefinedRuns() {
     const container = document.getElementById('predefined-runs');
-    
-    // Gruppiere nach Design-Phasen
-    const typeLabels = {
-        screening: '🔬 Screening',
-        interaction: '🔗 Interaktion',
-        strategic: '♟️ Strategisch',
-        edge: '📊 Randwert',
-        optimization: '🎯 Optimierung'
-    };
-    
-    // Gruppiere Runs nach Phase
+    const completedCount = getCompletedRunsCount();
     let html = '';
-    if (typeof EXPERIMENT_DESIGN !== 'undefined') {
-        EXPERIMENT_DESIGN.phases.forEach(phase => {
-            const phaseRuns = PREDEFINED_RUNS.filter(r => phase.runs.includes(r.id));
-            html += `
-                <div class="experiment-phase-group">
-                    <h4 class="phase-group-title" style="border-left: 4px solid ${phase.color}; padding-left: 12px;">
-                        ${phase.name} <span style="font-weight: 400; color: var(--text-muted);">(${phase.goal})</span>
-                    </h4>
-                    <div class="phase-runs-grid">
-            `;
-            
-            phaseRuns.forEach(run => {
-                const existing = appState.runs.find(r => r.predefinedId === run.id);
-                const isCompleted = existing && isRunCompleted(existing);
-                const isInProgress = existing && !isCompleted;
-                
-                html += `
-                    <div class="run-card ${isCompleted ? 'completed' : ''} ${isInProgress ? 'in-progress' : ''}" 
-                         onclick="startPredefinedRun(${run.id})"
-                         style="border-top: 3px solid ${phase.color};">
-                        <div class="run-card-header">
-                            <h4>${run.name}</h4>
-                            ${isCompleted ? '<span class="status-badge completed">✓</span>' : ''}
-                            ${isInProgress ? '<span class="status-badge progress">⏳</span>' : ''}
-                        </div>
-                        <p>${run.description}</p>
-                        <span class="run-type ${run.type}">${typeLabels[run.type] || run.type}</span>
-                    </div>
-                `;
-            });
-            
-            html += '</div></div>';
-        });
-    } else {
-        // Fallback für alte Struktur
-        html = PREDEFINED_RUNS.map(run => {
-            const existing = appState.runs.find(r => r.predefinedId === run.id);
+    
+    EXPERIMENT_DESIGN.phases.forEach(phase => {
+        const phaseRuns = PREDEFINED_RUNS.filter(r => phase.runs.indexOf(r.id) !== -1);
+        
+        html += '<div class="experiment-phase-group">' +
+            '<div class="phase-group-header" style="border-left: 4px solid ' + phase.color + '">' +
+            '<h4 class="phase-group-title">' + phase.name + '</h4>' +
+            '<span class="phase-group-count">' + phaseRuns.length + ' Versuche</span>' +
+            '</div>' +
+            '<div class="phase-runs-grid">';
+        
+        phaseRuns.forEach(predefinedRun => {
+            const existing = appState.runs.find(r => r.predefinedId === predefinedRun.id);
             const isCompleted = existing && isRunCompleted(existing);
+            const isInProgress = existing && !isCompleted;
+            const isAdaptive = predefinedRun.adaptive;
+            const canStart = !isAdaptive || completedCount >= 8;
             
-            return `
-                <div class="run-card ${isCompleted ? 'completed' : ''}" 
-                     onclick="startPredefinedRun(${run.id})">
-                    <h4>${run.name}</h4>
-                    <p>${run.description}</p>
-                    <span class="run-type ${run.type}">${typeLabels[run.type] || run.type}</span>
-                </div>
-            `;
-        }).join('');
-    }
+            let statusIcon = '';
+            if (isCompleted) {
+                statusIcon = '<span class="status-icon done">✓</span>';
+            } else if (isInProgress) {
+                statusIcon = '<span class="status-icon progress">●</span>';
+            } else if (!canStart) {
+                statusIcon = '<span class="status-icon locked">🔒</span>';
+            }
+            
+            html += '<div class="run-card ' + (isCompleted ? 'completed' : '') + ' ' + 
+                (isInProgress ? 'in-progress' : '') + ' ' + (!canStart ? 'locked' : '') + '" ' +
+                'onclick="' + (canStart ? 'startPredefinedRun(' + predefinedRun.id + ')' : '') + '">' +
+                '<div class="run-card-header">' +
+                '<span class="run-name">' + predefinedRun.name + '</span>' +
+                statusIcon +
+                '</div>' +
+                '<p class="run-desc">' + predefinedRun.description + '</p>' +
+                '</div>';
+        });
+        
+        html += '</div></div>';
+    });
     
     container.innerHTML = html;
 }
@@ -195,11 +201,19 @@ function startPredefinedRun(predefinedId) {
     const predefined = PREDEFINED_RUNS.find(r => r.id === predefinedId);
     if (!predefined) return;
     
-    // Check if run already exists
     let run = appState.runs.find(r => r.predefinedId === predefinedId);
     
     if (!run) {
-        // Create new run
+        let phases = predefined.phases;
+        if (predefined.adaptive && !phases) {
+            const recommendation = AnalysisEngine.generateRecommendation(appState.runs);
+            if (recommendation.phases) {
+                phases = recommendation.phases;
+            } else {
+                phases = generatePhaseData(LHS_MATRIX[1], LHS_DECISIONS[1]);
+            }
+        }
+        
         run = {
             id: generateId(),
             predefinedId: predefinedId,
@@ -207,14 +221,15 @@ function startPredefinedRun(predefinedId) {
             description: predefined.description,
             hypothesis: predefined.hypothesis,
             type: predefined.type,
+            block: predefined.block,
+            lhsRow: predefined.lhsRow,
             createdAt: new Date().toISOString(),
             phases: {}
         };
         
-        // Initialize phases with predefined values
         for (let phase = 1; phase <= 8; phase++) {
             run.phases[phase] = {
-                params: { ...predefined.phases[phase] },
+                params: phases ? JSON.parse(JSON.stringify(phases[phase])) : {},
                 results: {},
                 notes: '',
                 completed: false
@@ -233,9 +248,8 @@ function openRun(runId) {
     if (!run) return;
     
     appState.activeRun = run;
-    appState.activePhase = getLastCompletedPhase(run) || 1;
+    appState.activePhase = Math.max(1, getLastCompletedPhase(run) || 1);
     
-    // Update header
     document.getElementById('active-run-title').textContent = run.name;
     document.getElementById('active-run-desc').textContent = run.hypothesis || run.description;
     
@@ -244,24 +258,26 @@ function openRun(runId) {
     showView('active-run');
 }
 
-// ===== PHASE NAVIGATION =====
 function renderPhaseTabs() {
     const container = document.getElementById('phase-tabs');
     const run = appState.activeRun;
+    let html = '';
     
-    container.innerHTML = Array.from({length: 8}, (_, i) => i + 1).map(phase => {
+    for (let phase = 1; phase <= 8; phase++) {
         const isActive = phase === appState.activePhase;
-        const isCompleted = run.phases[phase]?.completed;
+        const isCompleted = run.phases[phase] && run.phases[phase].completed;
+        const hasBSC = run.phases[phase] && run.phases[phase].results && run.phases[phase].results.bscTotal;
         
-        return `
-            <div class="phase-tab ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}"
-                 onclick="goToPhase(${phase})">
-                Phase ${phase}
-            </div>
-        `;
-    }).join('');
+        html += '<div class="phase-tab ' + (isActive ? 'active' : '') + ' ' + (isCompleted ? 'completed' : '') + '" ' +
+            'onclick="goToPhase(' + phase + ')">' +
+            '<span class="phase-num">' + phase + '</span>' +
+            (isCompleted ? '<span class="phase-check">✓</span>' : '') +
+            (hasBSC ? '<span class="phase-bsc">' + run.phases[phase].results.bscTotal + '</span>' : '') +
+            '</div>';
+    }
     
-    document.getElementById('current-phase-badge').textContent = `Phase ${appState.activePhase}/8`;
+    container.innerHTML = html;
+    document.getElementById('current-phase-badge').textContent = 'Phase ' + appState.activePhase + '/8';
 }
 
 function goToPhase(phase) {
@@ -271,18 +287,13 @@ function goToPhase(phase) {
 }
 
 function previousPhase() {
-    if (appState.activePhase > 1) {
-        goToPhase(appState.activePhase - 1);
-    }
+    if (appState.activePhase > 1) goToPhase(appState.activePhase - 1);
 }
 
 function nextPhase() {
-    if (appState.activePhase < 8) {
-        goToPhase(appState.activePhase + 1);
-    }
+    if (appState.activePhase < 8) goToPhase(appState.activePhase + 1);
 }
 
-// ===== PHASE CONTENT =====
 function renderPhaseContent() {
     const run = appState.activeRun;
     const phase = appState.activePhase;
@@ -291,125 +302,97 @@ function renderPhaseContent() {
     
     const container = document.getElementById('phase-content');
     
-    // Parameters Section
-    let paramsHTML = `
-        <div class="phase-section">
-            <h4>🎯 Parameter für Phase ${phase}</h4>
-            <p style="color: var(--text-muted); margin-bottom: 16px; font-size: 0.9rem;">
-                Gib diese Werte in das Planspiel ein. Grüne Felder = empfohlene Werte.
-            </p>
-            <div class="param-grid">
-    `;
-    
+    // Nur verfügbare Parameter zeigen
     const params = ['developers', 'processOpt', 'salesStaff', 'advertising', 'priceM1', 'qtyM1', 'priceM2', 'qtyM2', 'marketResearch'];
+    const availableParams = params.filter(p => PARAM_AVAILABILITY[p] && PARAM_AVAILABILITY[p].indexOf(phase) !== -1);
     
-    params.forEach(param => {
-        const isAvailable = PARAM_AVAILABILITY[param]?.includes(phase);
-        const limits = phaseLimits?.[param];
+    let paramsHTML = '<div class="phase-section"><h4>Eingaben für Phase ' + phase + '</h4><div class="param-grid">';
+    
+    availableParams.forEach(param => {
+        const limits = phaseLimits ? phaseLimits[param] : null;
         const value = phaseData.params[param];
-        const hasRecommendation = value !== null && value !== undefined;
+        const hasValue = value !== null && value !== undefined;
         
-        // Min/Max Anzeige
-        let minMaxHint = '';
-        if (limits && isAvailable) {
-            minMaxHint = `<div class="param-range">Min: ${formatNumber(limits.min)} | Max: ${formatNumber(limits.max)}</div>`;
-        }
-        
-        paramsHTML += `
-            <div class="param-input ${hasRecommendation ? 'recommended' : ''} ${!isAvailable ? 'disabled' : ''}">
-                <label>${PARAM_LABELS[param] || param}</label>
-                <input type="number" 
-                       id="param-${param}"
-                       value="${value ?? ''}"
-                       ${!isAvailable ? 'disabled' : ''}
-                       ${limits ? `min="${limits.min}" max="${limits.max}"` : ''}
-                       placeholder="${!isAvailable ? 'Nicht verfügbar' : 'Wert eingeben'}"
-                       onchange="updateParam('${param}', this.value)">
-                ${minMaxHint}
-                ${hasRecommendation ? `<div class="param-hint">✓ Empfohlen: ${formatNumber(value)}</div>` : ''}
-            </div>
-        `;
+        paramsHTML += '<div class="param-input ' + (hasValue ? 'has-value' : '') + '">' +
+            '<label>' + PARAM_LABELS[param] + '</label>' +
+            '<input type="number" id="param-' + param + '" value="' + (value !== null && value !== undefined ? value : '') + '" ' +
+            (limits ? 'min="' + limits.min + '" max="' + limits.max + '"' : '') + ' ' +
+            'placeholder="' + (limits ? limits.min + ' - ' + formatNumber(limits.max) : '') + '" ' +
+            'onchange="updateParam(\'' + param + '\', this.value)">' +
+            (hasValue ? '<div class="param-planned">→ ' + formatNumber(value) + '</div>' : '') +
+            '</div>';
     });
     
     paramsHTML += '</div></div>';
     
-    // Strategic Decisions Section
-    const decisionsForPhase = Object.entries(STRATEGIC_DECISIONS)
-        .filter(([_, d]) => d.phase === phase);
-    
     let decisionsHTML = '';
+    const decisionsForPhase = [];
+    Object.keys(STRATEGIC_DECISIONS).forEach(key => {
+        if (STRATEGIC_DECISIONS[key].phase === phase) {
+            decisionsForPhase.push([key, STRATEGIC_DECISIONS[key]]);
+        }
+    });
+    
     if (decisionsForPhase.length > 0) {
-        decisionsHTML = `
-            <div class="phase-section">
-                <h4>📋 Strategische Entscheidungen</h4>
-                <div class="decision-grid">
-        `;
+        decisionsHTML = '<div class="phase-section"><h4>Strategische Entscheidungen</h4><div class="decision-grid">';
         
-        decisionsForPhase.forEach(([key, decision]) => {
-            const currentValue = phaseData.params.decisions?.[key] || '';
-            const hasRecommendation = currentValue !== '';
+        decisionsForPhase.forEach(pair => {
+            const key = pair[0];
+            const decision = pair[1];
+            const currentValue = phaseData.params.decisions ? phaseData.params.decisions[key] || '' : '';
+            const hasValue = currentValue !== '';
             
-            decisionsHTML += `
-                <div class="decision-item ${hasRecommendation ? 'recommended' : ''}">
-                    <label>${decision.label}</label>
-                    <select id="decision-${key}" onchange="updateDecision('${key}', this.value)">
-                        <option value="">-- Auswählen --</option>
-                        ${decision.options.map(opt => 
-                            `<option value="${opt.value}" ${currentValue === opt.value ? 'selected' : ''}>
-                                ${opt.label}
-                            </option>`
-                        ).join('')}
-                    </select>
-                    ${hasRecommendation ? '<div class="param-hint">✓ Empfohlen</div>' : ''}
-                </div>
-            `;
+            decisionsHTML += '<div class="decision-item ' + (hasValue ? 'has-value' : '') + '">' +
+                '<label>' + decision.label + '</label>' +
+                '<select id="decision-' + key + '" onchange="updateDecision(\'' + key + '\', this.value)">' +
+                '<option value="">Wählen...</option>';
+            
+            decision.options.forEach(opt => {
+                decisionsHTML += '<option value="' + opt.value + '" ' + (currentValue === opt.value ? 'selected' : '') + '>' +
+                    opt.label + '</option>';
+            });
+            
+            decisionsHTML += '</select></div>';
         });
         
         decisionsHTML += '</div></div>';
     }
     
-    // Results Section
-    const resultsHTML = `
-        <div class="results-section">
-            <h4>📊 Ergebnisse aus dem Planspiel</h4>
-            <p style="color: var(--text-secondary); margin-bottom: 16px; font-size: 0.85rem;">
-                Trage hier die BSC-Werte ein, nachdem du die Phase im Planspiel abgeschlossen hast.
-            </p>
-            <div class="results-grid">
-                ${Object.entries(RESULT_FIELDS).map(([key, label]) => `
-                    <div class="result-input">
-                        <label>${label}</label>
-                        <input type="number" 
-                               id="result-${key}"
-                               value="${phaseData.results?.[key] ?? ''}"
-                               placeholder="-"
-                               onchange="updateResult('${key}', this.value)">
-                    </div>
-                `).join('')}
-            </div>
-        </div>
-    `;
+    // Ergebnisse - nur BSC Gesamt prominent, Rest kleiner
+    let resultsHTML = '<div class="results-section"><h4>Ergebnisse eintragen</h4><div class="results-grid">';
     
-    // Notes Section
-    const notesHTML = `
-        <div class="notes-section">
-            <h4>📝 Notizen</h4>
-            <textarea 
-                id="phase-notes"
-                placeholder="Beobachtungen, Auffälligkeiten, Ideen..."
-                onchange="updateNotes(this.value)"
-            >${phaseData.notes || ''}</textarea>
-        </div>
-    `;
+    // BSC Gesamt zuerst und groß
+    const bscValue = phaseData.results ? phaseData.results.bscTotal : null;
+    resultsHTML += '<div class="result-input bsc-main ' + (bscValue ? 'has-value' : '') + '">' +
+        '<label>BSC Gesamt</label>' +
+        '<input type="number" id="result-bscTotal" value="' + (bscValue !== null && bscValue !== undefined ? bscValue : '') + '" ' +
+        'placeholder="0-1000" onchange="updateResult(\'bscTotal\', this.value)">' +
+        '</div>';
+    
+    // Andere Ergebnisse kleiner
+    const otherResults = ['innovation', 'socialImpact', 'profitMargin', 'sustainability', 'jobs', 'planning'];
+    otherResults.forEach(key => {
+        const label = RESULT_FIELDS[key];
+        const value = phaseData.results ? phaseData.results[key] : null;
+        resultsHTML += '<div class="result-input small ' + (value ? 'has-value' : '') + '">' +
+            '<label>' + label + '</label>' +
+            '<input type="number" id="result-' + key + '" value="' + (value !== null && value !== undefined ? value : '') + '" ' +
+            'placeholder="-" onchange="updateResult(\'' + key + '\', this.value)">' +
+            '</div>';
+    });
+    
+    resultsHTML += '</div></div>';
+    
+    const notesHTML = '<div class="notes-section">' +
+        '<textarea id="phase-notes" placeholder="Notizen (optional)..." onchange="updateNotes(this.value)">' +
+        (phaseData.notes || '') + '</textarea></div>';
     
     container.innerHTML = paramsHTML + decisionsHTML + resultsHTML + notesHTML;
     
-    // Update navigation buttons
     document.getElementById('prev-phase-btn').disabled = phase === 1;
     document.getElementById('next-phase-btn').disabled = phase === 8;
 }
 
-// ===== DATA UPDATES =====
 function updateParam(param, value) {
     const run = appState.activeRun;
     const phase = appState.activePhase;
@@ -457,23 +440,24 @@ function saveCurrentPhase() {
     
     renderPhaseTabs();
     
-    // Show success feedback
     const btn = document.getElementById('save-phase-btn');
     const originalText = btn.innerHTML;
-    btn.innerHTML = '✅ Gespeichert!';
-    btn.style.background = 'var(--success)';
+    btn.innerHTML = 'Gespeichert!';
+    btn.classList.add('success');
     
-    setTimeout(() => {
+    setTimeout(function() {
         btn.innerHTML = originalText;
-        btn.style.background = '';
+        btn.classList.remove('success');
     }, 2000);
 }
 
-// ===== CUSTOM RUNS =====
 function initCustomRunToggle() {
-    document.getElementById('toggle-custom').addEventListener('click', () => {
-        document.getElementById('custom-run-form').classList.toggle('hidden');
-    });
+    const toggle = document.getElementById('toggle-custom');
+    if (toggle) {
+        toggle.addEventListener('click', function() {
+            document.getElementById('custom-run-form').classList.toggle('hidden');
+        });
+    }
 }
 
 function createCustomRun() {
@@ -481,7 +465,7 @@ function createCustomRun() {
     const desc = document.getElementById('custom-run-desc').value.trim();
     
     if (!name) {
-        alert('Bitte gib einen Namen für den Versuch ein.');
+        alert('Bitte gib einen Namen ein.');
         return;
     }
     
@@ -496,21 +480,9 @@ function createCustomRun() {
         phases: {}
     };
     
-    // Initialize empty phases
     for (let phase = 1; phase <= 8; phase++) {
         run.phases[phase] = {
-            params: {
-                developers: null,
-                processOpt: null,
-                salesStaff: null,
-                advertising: null,
-                priceM1: null,
-                qtyM1: null,
-                priceM2: null,
-                qtyM2: null,
-                wholesalerPct: null,
-                decisions: {}
-            },
+            params: { decisions: {} },
             results: {},
             notes: '',
             completed: false
@@ -519,292 +491,164 @@ function createCustomRun() {
     
     appState.runs.push(run);
     saveState();
-    
-    // Clear form
-    document.getElementById('custom-run-name').value = '';
-    document.getElementById('custom-run-desc').value = '';
-    document.getElementById('custom-run-form').classList.add('hidden');
-    
     openRun(run.id);
 }
 
-// ===== RUNS LIST =====
 function updateRunsList() {
     const container = document.getElementById('runs-list');
     
     if (appState.runs.length === 0) {
-        container.innerHTML = '<p class="empty-state">Noch keine Versuche vorhanden</p>';
+        container.innerHTML = '<p class="empty-state">Noch keine Versuche vorhanden.</p>';
         return;
     }
     
-    container.innerHTML = appState.runs.map(run => {
+    const sortedRuns = appState.runs.slice().sort((a, b) => 
+        new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt)
+    );
+    
+    let html = '';
+    sortedRuns.forEach(run => {
         const completed = isRunCompleted(run);
-        const lastPhase = getLastCompletedPhase(run);
-        const finalBSC = run.phases[8]?.results?.bscTotal;
+        const phase = getLastCompletedPhase(run);
+        const bsc = run.phases[8] && run.phases[8].results ? run.phases[8].results.bscTotal : null;
         
-        return `
-            <div class="run-list-item">
-                <div class="run-list-info">
-                    <h4>${run.name}</h4>
-                    <p>${run.description || run.hypothesis || '-'}</p>
-                </div>
-                <div class="run-list-meta">
-                    <span class="progress-status ${completed ? 'completed' : 'in-progress'}">
-                        ${completed ? 'Abgeschlossen' : `Phase ${lastPhase}/8`}
-                    </span>
-                    ${finalBSC ? `
-                        <div class="run-bsc">
-                            <div class="value">${finalBSC}</div>
-                            <div class="label">BSC</div>
-                        </div>
-                    ` : ''}
-                    <div class="run-actions">
-                        <button class="btn-secondary btn-small" onclick="openRun('${run.id}')">
-                            📝 Bearbeiten
-                        </button>
-                        <button class="btn-danger-small" onclick="deleteRun('${run.id}')" 
-                                style="padding: 8px 12px; width: auto;">
-                            🗑️
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-    }).join('');
+        html += '<div class="run-list-item ' + (completed ? 'completed' : '') + '" onclick="openRun(\'' + run.id + '\')">' +
+            '<div class="run-list-main">' +
+            '<h4>' + run.name + '</h4>' +
+            '<p>' + (run.description || '') + '</p>' +
+            '</div>' +
+            '<div class="run-list-meta">' +
+            '<span class="run-list-phase">Phase ' + phase + '/8</span>' +
+            (bsc ? '<span class="run-list-bsc">' + bsc + ' BSC</span>' : '') +
+            '</div>' +
+            '<div class="run-list-actions">' +
+            '<button class="btn-icon" onclick="event.stopPropagation(); deleteRun(\'' + run.id + '\')" title="Löschen">X</button>' +
+            '</div>' +
+            '</div>';
+    });
+    
+    container.innerHTML = html;
 }
 
 function deleteRun(runId) {
-    if (!confirm('Versuch wirklich löschen? Dies kann nicht rückgängig gemacht werden.')) {
-        return;
-    }
+    if (!confirm('Versuch löschen?')) return;
     
     appState.runs = appState.runs.filter(r => r.id !== runId);
     saveState();
     updateRunsList();
+    updateDashboard();
 }
 
-// ===== ANALYSIS =====
 function updateAnalysis() {
-    const completedRuns = appState.runs.filter(r => 
-        r.phases[8]?.results?.bscTotal
-    );
+    const completedRuns = appState.runs.filter(r => isRunCompleted(r));
     
-    // BSC Ranking
     const rankingContainer = document.getElementById('bsc-ranking');
     if (completedRuns.length === 0) {
         rankingContainer.innerHTML = '<p class="empty-state">Mindestens 1 abgeschlossener Versuch benötigt</p>';
     } else {
-        const sorted = [...completedRuns].sort((a, b) => 
+        const sorted = completedRuns.slice().sort((a, b) => 
             (b.phases[8].results.bscTotal || 0) - (a.phases[8].results.bscTotal || 0)
         );
         
-        rankingContainer.innerHTML = sorted.map((run, i) => {
-            const positionClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
-            return `
-                <div class="ranking-item">
-                    <div class="ranking-position ${positionClass}">${i + 1}</div>
-                    <div class="ranking-info">
-                        <h4>${run.name}</h4>
-                        <p>${run.type || 'Custom'}</p>
-                    </div>
-                    <div class="ranking-score">${run.phases[8].results.bscTotal}</div>
-                </div>
-            `;
-        }).join('');
+        let html = '<div class="ranking-list">';
+        sorted.forEach((run, i) => {
+            const bsc = run.phases[8].results.bscTotal;
+            const medal = i === 0 ? '1.' : i === 1 ? '2.' : i === 2 ? '3.' : (i + 1) + '.';
+            html += '<div class="ranking-item ' + (i === 0 ? 'top' : '') + '" onclick="openRun(\'' + run.id + '\')">' +
+                '<span class="ranking-medal">' + medal + '</span>' +
+                '<span class="ranking-name">' + run.name + '</span>' +
+                '<span class="ranking-bsc">' + bsc + ' BSC</span>' +
+                '</div>';
+        });
+        html += '</div>';
+        rankingContainer.innerHTML = html;
     }
     
-    // Parameter Comparison
-    const comparisonContainer = document.getElementById('parameter-comparison');
-    if (completedRuns.length < 2) {
-        comparisonContainer.innerHTML = '<p class="empty-state">Mindestens 2 abgeschlossene Versuche benötigt</p>';
-    } else {
-        // Find best run and compare
-        const best = completedRuns.reduce((a, b) => 
-            (a.phases[8].results.bscTotal || 0) > (b.phases[8].results.bscTotal || 0) ? a : b
-        );
-        
-        comparisonContainer.innerHTML = `
-            <p style="margin-bottom: 16px;">Beste Konfiguration: <strong>${best.name}</strong></p>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">
-                ${Object.entries(PARAM_LABELS).map(([key, label]) => {
-                    const value = best.phases[8]?.params?.[key];
-                    return value !== null && value !== undefined ? `
-                        <div style="background: var(--bg-input); padding: 12px; border-radius: 8px;">
-                            <div style="font-size: 0.75rem; color: var(--text-muted);">${label}</div>
-                            <div style="font-size: 1.1rem; font-weight: 600;">${formatNumber(value)}</div>
-                        </div>
-                    ` : '';
-                }).join('')}
-            </div>
-        `;
-    }
-    
-    // Insights
-    const insightsContainer = document.getElementById('insights');
-    if (completedRuns.length < 3) {
-        insightsContainer.innerHTML = '<p class="empty-state">Führe mehr Versuche durch für automatische Erkenntnisse</p>';
-    } else {
-        // Generate basic insights
-        const insights = generateInsights(completedRuns);
-        insightsContainer.innerHTML = insights.map(insight => `
-            <div style="background: var(--bg-input); padding: 16px; border-radius: 8px; margin-bottom: 12px; border-left: 3px solid ${insight.color};">
-                <strong>${insight.title}</strong>
-                <p style="color: var(--text-secondary); margin-top: 4px;">${insight.text}</p>
-            </div>
-        `).join('');
-    }
+    renderCorrelationAnalysis();
+    renderInsights();
 }
 
-function generateInsights(runs) {
-    const insights = [];
+function renderCorrelationAnalysis() {
+    const container = document.getElementById('parameter-comparison');
+    const correlations = AnalysisEngine.calculateCorrelations(appState.runs);
     
-    // Find best and worst
-    const sorted = [...runs].sort((a, b) => 
-        (b.phases[8].results.bscTotal || 0) - (a.phases[8].results.bscTotal || 0)
-    );
-    const best = sorted[0];
-    const worst = sorted[sorted.length - 1];
-    
-    insights.push({
-        title: '🏆 Beste Performance',
-        text: `${best.name} erreichte die höchste BSC von ${best.phases[8].results.bscTotal}`,
-        color: 'var(--success)'
-    });
-    
-    // Compare specific runs if available
-    const highAll = runs.find(r => r.predefinedId === 2);
-    const lowAll = runs.find(r => r.predefinedId === 3);
-    const baseline = runs.find(r => r.predefinedId === 1);
-    
-    if (highAll && lowAll) {
-        const diff = (highAll.phases[8].results.bscTotal || 0) - (lowAll.phases[8].results.bscTotal || 0);
-        insights.push({
-            title: '📊 High vs Low Vergleich',
-            text: `High-All ist ${diff > 0 ? diff + ' Punkte besser' : Math.abs(diff) + ' Punkte schlechter'} als Low-All`,
-            color: 'var(--primary)'
-        });
-    }
-    
-    // Interaction insights
-    const priceAdvHigh = runs.find(r => r.predefinedId === 4);
-    const priceAdvMix = runs.find(r => r.predefinedId === 5);
-    
-    if (priceAdvHigh && priceAdvMix) {
-        const highBSC = priceAdvHigh.phases[8].results.bscTotal || 0;
-        const mixBSC = priceAdvMix.phases[8].results.bscTotal || 0;
-        
-        insights.push({
-            title: '💡 Preis×Werbung Interaktion',
-            text: mixBSC > highBSC ? 
-                'Niedriger Preis + hohe Werbung scheint besser zu funktionieren als Premium-Positionierung' :
-                'Premium-Positionierung (hoher Preis + hohe Werbung) scheint effektiver zu sein',
-            color: 'var(--warning)'
-        });
-    }
-    
-    return insights;
-}
-
-// ===== EXPORT =====
-function exportCSV() {
-    if (appState.runs.length === 0) {
-        alert('Keine Daten zum Exportieren vorhanden.');
+    if (!correlations) {
+        container.innerHTML = '<p class="empty-state">Mindestens 3 abgeschlossene Versuche benötigt</p>';
         return;
     }
     
-    let csv = 'run_id,run_name,type,phase,developers,process_opt,sales_staff,advertising,price_m1,qty_m1,price_m2,qty_m2,bsc_total,innovation,social_impact,profit_margin,sustainability,jobs,planning\n';
+    let html = '<div class="correlation-chart"><h5>Parameter-Korrelation mit BSC</h5>';
     
-    appState.runs.forEach(run => {
-        for (let phase = 1; phase <= 8; phase++) {
-            const p = run.phases[phase];
-            if (!p) continue;
-            
-            const row = [
-                run.id,
-                `"${run.name}"`,
-                run.type || 'custom',
-                phase,
-                p.params?.developers ?? '',
-                p.params?.processOpt ?? '',
-                p.params?.salesStaff ?? '',
-                p.params?.advertising ?? '',
-                p.params?.priceM1 ?? '',
-                p.params?.qtyM1 ?? '',
-                p.params?.priceM2 ?? '',
-                p.params?.qtyM2 ?? '',
-                p.results?.bscTotal ?? '',
-                p.results?.innovation ?? '',
-                p.results?.socialImpact ?? '',
-                p.results?.profitMargin ?? '',
-                p.results?.sustainability ?? '',
-                p.results?.jobs ?? '',
-                p.results?.planning ?? ''
-            ];
-            csv += row.join(',') + '\n';
-        }
+    correlations.ranking.forEach(item => {
+        const width = Math.abs(item.correlation) * 100;
+        const color = item.correlation > 0 ? 'var(--success)' : 'var(--error)';
+        const direction = item.correlation > 0 ? '+' : '-';
+        html += '<div class="correlation-row">' +
+            '<span class="corr-label">' + (PARAM_LABELS[item.param] ? PARAM_LABELS[item.param].split(' ')[0] : item.param) + '</span>' +
+            '<div class="corr-bar-container">' +
+            '<div class="corr-bar" style="width: ' + width + '%; background: ' + color + '"></div>' +
+            '</div>' +
+            '<span class="corr-value" style="color: ' + color + '">' + direction + item.correlation.toFixed(2) + '</span>' +
+            '</div>';
     });
     
-    downloadFile(csv, 'jg_experiments.csv', 'text/csv');
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+function renderInsights() {
+    const container = document.getElementById('insights');
+    const insights = AnalysisEngine.generateInsights(appState.runs);
+    
+    if (insights.length === 0) {
+        container.innerHTML = '<p class="empty-state">Mehr Versuche für Erkenntnisse</p>';
+        return;
+    }
+    
+    let html = '';
+    insights.forEach(insight => {
+        html += '<div class="insight-item ' + insight.type + '">' +
+            '<span class="insight-icon">' + insight.icon + '</span>' +
+            '<div class="insight-content">' +
+            '<strong>' + insight.title + '</strong>' +
+            '<p>' + insight.text + '</p>' +
+            '</div></div>';
+    });
+    
+    container.innerHTML = html;
+}
+
+function exportCSV() {
+    const result = AnalysisEngine.exportForML(appState.runs);
+    
+    if (result.rows.length === 0) {
+        alert('Keine Daten zum Exportieren.');
+        return;
+    }
+    
+    const csv = result.header.join(',') + '\n' + result.rows.map(r => r.join(',')).join('\n');
+    downloadFile(csv, 'jugend_gruendet.csv', 'text/csv');
 }
 
 function exportJSON() {
     const data = JSON.stringify(appState, null, 2);
-    downloadFile(data, 'jg_experiments.json', 'application/json');
+    downloadFile(data, 'jugend_gruendet_backup.json', 'application/json');
 }
 
 function exportPythonReady() {
-    if (appState.runs.length === 0) {
-        alert('Keine Daten zum Exportieren vorhanden.');
+    const result = AnalysisEngine.exportForML(appState.runs);
+    
+    if (result.rows.length === 0) {
+        alert('Keine Daten.');
         return;
     }
     
-    // Flat format optimized for ML
-    let csv = 'run_id,type,';
-    
-    // Add column headers for all phases
-    for (let p = 1; p <= 8; p++) {
-        csv += `p${p}_dev,p${p}_proc,p${p}_sales,p${p}_adv,`;
-        if (p >= 2) csv += `p${p}_price1,p${p}_qty1,`;
-        if (p >= 5) csv += `p${p}_price2,p${p}_qty2,`;
-    }
-    csv += 'bsc_final,innov_final,social_final,profit_final,sustain_final,jobs_final,plan_final\n';
-    
-    appState.runs.forEach(run => {
-        let row = [run.id, run.type || 'custom'];
-        
-        for (let p = 1; p <= 8; p++) {
-            const ph = run.phases[p];
-            row.push(ph?.params?.developers ?? '');
-            row.push(ph?.params?.processOpt ?? '');
-            row.push(ph?.params?.salesStaff ?? '');
-            row.push(ph?.params?.advertising ?? '');
-            if (p >= 2) {
-                row.push(ph?.params?.priceM1 ?? '');
-                row.push(ph?.params?.qtyM1 ?? '');
-            }
-            if (p >= 5) {
-                row.push(ph?.params?.priceM2 ?? '');
-                row.push(ph?.params?.qtyM2 ?? '');
-            }
-        }
-        
-        const final = run.phases[8]?.results || {};
-        row.push(final.bscTotal ?? '');
-        row.push(final.innovation ?? '');
-        row.push(final.socialImpact ?? '');
-        row.push(final.profitMargin ?? '');
-        row.push(final.sustainability ?? '');
-        row.push(final.jobs ?? '');
-        row.push(final.planning ?? '');
-        
-        csv += row.join(',') + '\n';
-    });
-    
-    downloadFile(csv, 'jg_experiments_ml_ready.csv', 'text/csv');
+    const csv = result.header.join(';') + '\n' + result.rows.map(r => r.join(';')).join('\n');
+    downloadFile(csv, 'jugend_gruendet_ml.csv', 'text/csv');
 }
 
-function downloadFile(content, filename, type) {
-    const blob = new Blob([content], { type });
+function downloadFile(content, filename, mimeType) {
+    const blob = new Blob([content], { type: mimeType });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -818,76 +662,52 @@ function importData(event) {
     if (!file) return;
     
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = function(e) {
         try {
             const data = JSON.parse(e.target.result);
             if (data.runs && Array.isArray(data.runs)) {
-                if (confirm(`${data.runs.length} Versuche gefunden. Bestehende Daten überschreiben?`)) {
+                if (confirm(data.runs.length + ' Versuche importieren?')) {
                     appState = data;
                     saveState();
                     updateDashboard();
                     alert('Import erfolgreich!');
                 }
-            } else {
-                alert('Ungültiges Dateiformat.');
             }
         } catch (err) {
-            alert('Fehler beim Lesen der Datei: ' + err.message);
+            alert('Fehler beim Lesen.');
         }
     };
     reader.readAsText(file);
 }
 
-// ===== RESET =====
 function initResetButton() {
-    document.getElementById('reset-data').addEventListener('click', () => {
-        if (confirm('Alle Daten wirklich löschen? Dies kann nicht rückgängig gemacht werden!')) {
-            localStorage.removeItem('jg_experiment_data');
-            appState = { runs: [], activeRun: null, activePhase: 1 };
-            updateDashboard();
-            showView('dashboard');
-            alert('Alle Daten wurden gelöscht.');
-        }
-    });
-}
-
-// ===== HELPERS =====
-function generateId() {
-    return 'run_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-}
-
-function isRunCompleted(run) {
-    return run.phases[8]?.completed && run.phases[8]?.results?.bscTotal;
-}
-
-function getLastCompletedPhase(run) {
-    for (let i = 8; i >= 1; i--) {
-        if (run.phases[i]?.completed) return i;
+    const btn = document.getElementById('reset-data');
+    if (btn) {
+        btn.addEventListener('click', function() {
+            if (confirm('Alle Daten löschen?')) {
+                localStorage.removeItem('jg_experiment_data_v2');
+                appState = { runs: [], activeRun: null, activePhase: 1 };
+                updateDashboard();
+                showView('dashboard');
+            }
+        });
     }
-    return 0;
 }
 
-function formatNumber(num) {
-    if (num === null || num === undefined) return '-';
-    return new Intl.NumberFormat('de-DE').format(num);
-}
-
-function formatRelativeTime(dateStr) {
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diff = now - date;
-    
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    const days = Math.floor(diff / 86400000);
-    
-    if (minutes < 1) return 'Gerade eben';
-    if (minutes < 60) return `vor ${minutes} Min.`;
-    if (hours < 24) return `vor ${hours} Std.`;
-    return `vor ${days} Tagen`;
-}
-
-// Modal Functions
-function closeResultsModal() {
-    document.getElementById('results-modal').classList.add('hidden');
-}
+window.showView = showView;
+window.startPredefinedRun = startPredefinedRun;
+window.openRun = openRun;
+window.goToPhase = goToPhase;
+window.previousPhase = previousPhase;
+window.nextPhase = nextPhase;
+window.saveCurrentPhase = saveCurrentPhase;
+window.createCustomRun = createCustomRun;
+window.deleteRun = deleteRun;
+window.updateParam = updateParam;
+window.updateDecision = updateDecision;
+window.updateResult = updateResult;
+window.updateNotes = updateNotes;
+window.exportCSV = exportCSV;
+window.exportJSON = exportJSON;
+window.exportPythonReady = exportPythonReady;
+window.importData = importData;
