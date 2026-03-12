@@ -91,63 +91,26 @@ const PHASE_LIMITS = {
         salesStaff: { min: 0, max: 55 },
         advertising: { min: 100000, max: 2500000 },
         priceM1: { min: 280, max: 2000 },
-        qtyM1: { min: 1000, max: 1000 },
+        qtyM1: { min: 1000, max: 25000 },
         priceM2: { min: 280, max: 2000 },
         qtyM2: { min: 500, max: 2000 },
         marketResearch: { min: 10000, max: 40000 },
-        decisions: ['d11', 'd12']
+        decisions: ['d9', 'd10']
     }
 };
 
-// Strategische Entscheidungen Optionen
+// Strategische Entscheidungen - nur nummeriert
 const STRATEGIC_DECISIONS = {
-    d1: {
-        label: "Startkapital",
-        phase: 1,
-        options: [
-            { value: "bootstrapping", label: "Bootstrapping" },
-            { value: "green_climate_fund", label: "Green Climate Fund" },
-            { value: "investor", label: "Investor" },
-            { value: "foerderprogramm", label: "Förderprogramm" }
-        ]
-    },
-    d2: {
-        label: "Ortswahl",
-        phase: 2,
-        options: [
-            { value: "passau", label: "Passau" },
-            { value: "berlin", label: "Berlin" },
-            { value: "muenchen", label: "München" },
-            { value: "hamburg", label: "Hamburg" },
-            { value: "koeln", label: "Köln" }
-        ]
-    },
-    d3: {
-        label: "Rechtsform",
-        phase: 3,
-        options: [
-            { value: "gbr", label: "GbR" },
-            { value: "gmbh", label: "GmbH" },
-            { value: "ag", label: "AG" }
-        ]
-    },
-    d4: {
-        label: "Geschäftsmodell",
-        phase: 4,
-        options: [
-            { value: "open_source", label: "Open Source" },
-            { value: "klassische_lizenzen", label: "Klassische Lizenzen" },
-            { value: "cloud", label: "Cloud / SaaS" }
-        ]
-    },
-    d5: { label: "Entscheidung 5", phase: 5, options: [{ value: "option_a", label: "A" }, { value: "option_b", label: "B" }, { value: "option_c", label: "C" }] },
-    d6: { label: "Entscheidung 6", phase: 5, options: [{ value: "option_a", label: "A" }, { value: "option_b", label: "B" }, { value: "option_c", label: "C" }] },
-    d7: { label: "Entscheidung 7", phase: 6, options: [{ value: "option_a", label: "A" }, { value: "option_b", label: "B" }, { value: "option_c", label: "C" }] },
-    d8: { label: "Entscheidung 8", phase: 6, options: [{ value: "option_a", label: "A" }, { value: "option_b", label: "B" }, { value: "option_c", label: "C" }] },
-    d9: { label: "Entscheidung 9", phase: 7, options: [{ value: "option_a", label: "A" }, { value: "option_b", label: "B" }, { value: "option_c", label: "C" }] },
-    d10: { label: "Entscheidung 10", phase: 7, options: [{ value: "option_a", label: "A" }, { value: "option_b", label: "B" }, { value: "option_c", label: "C" }] },
-    d11: { label: "Entscheidung 11", phase: 8, options: [{ value: "option_a", label: "A" }, { value: "option_b", label: "B" }, { value: "option_c", label: "C" }] },
-    d12: { label: "Entscheidung 12", phase: 8, options: [{ value: "option_a", label: "A" }, { value: "option_b", label: "B" }, { value: "option_c", label: "C" }] }
+    d1: { label: "Entscheidung 1", phase: 1, options: [{ value: "1", label: "1" }, { value: "2", label: "2" }, { value: "3", label: "3" }] },
+    d2: { label: "Entscheidung 2", phase: 2, options: [{ value: "1", label: "1" }, { value: "2", label: "2" }, { value: "3", label: "3" }] },
+    d3: { label: "Entscheidung 3", phase: 3, options: [{ value: "1", label: "1" }, { value: "2", label: "2" }, { value: "3", label: "3" }] },
+    d4: { label: "Entscheidung 4", phase: 4, options: [{ value: "1", label: "1" }, { value: "2", label: "2" }, { value: "3", label: "3" }] },
+    d5: { label: "Entscheidung 5", phase: 5, options: [{ value: "1", label: "1" }, { value: "2", label: "2" }, { value: "3", label: "3" }] },
+    d6: { label: "Entscheidung 6", phase: 5, options: [{ value: "1", label: "1" }, { value: "2", label: "2" }, { value: "3", label: "3" }] },
+    d7: { label: "Entscheidung 7", phase: 6, options: [{ value: "1", label: "1" }, { value: "2", label: "2" }, { value: "3", label: "3" }] },
+    d8: { label: "Entscheidung 8", phase: 6, options: [{ value: "1", label: "1" }, { value: "2", label: "2" }, { value: "3", label: "3" }] },
+    d9: { label: "Entscheidung 9", phase: 7, options: [{ value: "1", label: "1" }, { value: "2", label: "2" }, { value: "3", label: "3" }] },
+    d10: { label: "Entscheidung 10", phase: 7, options: [{ value: "1", label: "1" }, { value: "2", label: "2" }, { value: "3", label: "3" }] }
 };
 
 // Hilfsfunktion: Berechne Wert basierend auf Perzentil
@@ -171,129 +134,129 @@ const EXPERIMENT_DESIGN = {
 
 const PREDEFINED_RUNS = [
     {
-        id: 1, name: "V1: Baseline", description: "Alle Parameter bei 50%", type: "screening",
-        hypothesis: "Goldener Mittelweg als Vergleichsbasis",
+        id: 1, name: "V1: Baseline", description: "Realistische Startwerte (Konkurrenz-Niveau)", type: "screening",
+        hypothesis: "Solide Basis als Vergleichsreferenz",
         phases: {
-            1: { developers: 17, processOpt: 500000, salesStaff: 17, advertising: 375000, priceM1: null, qtyM1: null, priceM2: null, qtyM2: null, marketResearch: null, decisions: { d1: "green_climate_fund" } },
-            2: { developers: 20, processOpt: 675000, salesStaff: 20, advertising: 550000, priceM1: 925, qtyM1: 8000, priceM2: null, qtyM2: null, marketResearch: 25000, decisions: { d2: "muenchen" } },
-            3: { developers: 20, processOpt: 800000, salesStaff: 20, advertising: 550000, priceM1: 1035, qtyM1: 10500, priceM2: null, qtyM2: null, marketResearch: 25000, decisions: { d3: "gmbh" } },
-            4: { developers: 22, processOpt: 925000, salesStaff: 22, advertising: 925000, priceM1: 1055, qtyM1: 11000, priceM2: null, qtyM2: null, marketResearch: 25000, decisions: { d4: "cloud" } },
-            5: { developers: 22, processOpt: 950000, salesStaff: 22, advertising: 950000, priceM1: 1050, qtyM1: 11500, priceM2: 1050, qtyM2: 300, marketResearch: 25000, decisions: { d5: "option_a", d6: "option_a" } },
-            6: { developers: 25, processOpt: 1050000, salesStaff: 25, advertising: 1300000, priceM1: 1145, qtyM1: 13000, priceM2: 1145, qtyM2: 375, marketResearch: 25000, decisions: { d7: "option_a", d8: "option_a" } },
-            7: { developers: 27, processOpt: 1050000, salesStaff: 27, advertising: 1300000, priceM1: 1140, qtyM1: 13000, priceM2: 1140, qtyM2: 650, marketResearch: 25000, decisions: { d9: "option_a", d10: "option_a" } },
-            8: { developers: 27, processOpt: 800000, salesStaff: 27, advertising: 1300000, priceM1: 1140, qtyM1: 1000, priceM2: 1140, qtyM2: 1250, marketResearch: 25000, decisions: { d11: "option_a", d12: "option_a" } }
+            1: { developers: 10, processOpt: 300000, salesStaff: 10, advertising: 200000, priceM1: null, qtyM1: null, priceM2: null, qtyM2: null, marketResearch: null, decisions: { d1: "1" } },
+            2: { developers: 12, processOpt: 400000, salesStaff: 12, advertising: 250000, priceM1: 580, qtyM1: 5000, priceM2: null, qtyM2: null, marketResearch: 20000, decisions: { d2: "1" } },
+            3: { developers: 14, processOpt: 450000, salesStaff: 14, advertising: 280000, priceM1: 600, qtyM1: 6000, priceM2: null, qtyM2: null, marketResearch: 20000, decisions: { d3: "1" } },
+            4: { developers: 16, processOpt: 500000, salesStaff: 16, advertising: 350000, priceM1: 620, qtyM1: 7000, priceM2: null, qtyM2: null, marketResearch: 20000, decisions: { d4: "1" } },
+            5: { developers: 18, processOpt: 550000, salesStaff: 18, advertising: 400000, priceM1: 640, qtyM1: 8000, priceM2: 640, qtyM2: 200, marketResearch: 20000, decisions: { d5: "1", d6: "1" } },
+            6: { developers: 20, processOpt: 600000, salesStaff: 20, advertising: 500000, priceM1: 660, qtyM1: 9000, priceM2: 660, qtyM2: 300, marketResearch: 20000, decisions: { d7: "1", d8: "1" } },
+            7: { developers: 22, processOpt: 650000, salesStaff: 22, advertising: 550000, priceM1: 680, qtyM1: 10000, priceM2: 680, qtyM2: 500, marketResearch: 20000, decisions: { d9: "1", d10: "1" } },
+            8: { developers: 24, processOpt: 600000, salesStaff: 24, advertising: 600000, priceM1: 700, qtyM1: 10000, priceM2: 700, qtyM2: 800, marketResearch: 20000, decisions: { d9: "1", d10: "1" } }
         }
     },
     {
-        id: 2, name: "V2: Maximum", description: "Alle Parameter bei 80%", type: "screening",
-        hypothesis: "Hohe Investitionen = Hoher Return?",
+        id: 2, name: "V2: Mehr Entwickler", description: "+50% Developer vs Baseline", type: "screening",
+        hypothesis: "Höhere Innovation durch mehr Entwickler",
         phases: {
-            1: { developers: 28, processOpt: 800000, salesStaff: 28, advertising: 600000, priceM1: null, qtyM1: null, priceM2: null, qtyM2: null, marketResearch: null, decisions: { d1: "investor" } },
-            2: { developers: 32, processOpt: 1020000, salesStaff: 32, advertising: 820000, priceM1: 1270, qtyM1: 12200, priceM2: null, qtyM2: null, marketResearch: 34000, decisions: { d2: "berlin" } },
-            3: { developers: 32, processOpt: 1220000, salesStaff: 32, advertising: 820000, priceM1: 1464, qtyM1: 16200, priceM2: null, qtyM2: null, marketResearch: 34000, decisions: { d3: "ag" } },
-            4: { developers: 36, processOpt: 1420000, salesStaff: 36, advertising: 1420000, priceM1: 1502, qtyM1: 17000, priceM2: null, qtyM2: null, marketResearch: 34000, decisions: { d4: "klassische_lizenzen" } },
-            5: { developers: 36, processOpt: 1460000, salesStaff: 36, advertising: 1460000, priceM1: 1500, qtyM1: 17800, priceM2: 1500, qtyM2: 480, marketResearch: 34000, decisions: { d5: "option_b", d6: "option_b" } },
-            6: { developers: 40, processOpt: 1620000, salesStaff: 40, advertising: 2020000, priceM1: 1658, qtyM1: 20200, priceM2: 1658, qtyM2: 600, marketResearch: 34000, decisions: { d7: "option_b", d8: "option_b" } },
-            7: { developers: 44, processOpt: 1620000, salesStaff: 44, advertising: 2020000, priceM1: 1656, qtyM1: 20200, priceM2: 1656, qtyM2: 860, marketResearch: 34000, decisions: { d9: "option_b", d10: "option_b" } },
-            8: { developers: 44, processOpt: 1220000, salesStaff: 44, advertising: 2020000, priceM1: 1656, qtyM1: 1000, priceM2: 1656, qtyM2: 1700, marketResearch: 34000, decisions: { d11: "option_b", d12: "option_b" } }
+            1: { developers: 15, processOpt: 300000, salesStaff: 10, advertising: 200000, priceM1: null, qtyM1: null, priceM2: null, qtyM2: null, marketResearch: null, decisions: { d1: "1" } },
+            2: { developers: 18, processOpt: 400000, salesStaff: 12, advertising: 250000, priceM1: 580, qtyM1: 5000, priceM2: null, qtyM2: null, marketResearch: 20000, decisions: { d2: "1" } },
+            3: { developers: 21, processOpt: 450000, salesStaff: 14, advertising: 280000, priceM1: 600, qtyM1: 6000, priceM2: null, qtyM2: null, marketResearch: 20000, decisions: { d3: "1" } },
+            4: { developers: 24, processOpt: 500000, salesStaff: 16, advertising: 350000, priceM1: 620, qtyM1: 7000, priceM2: null, qtyM2: null, marketResearch: 20000, decisions: { d4: "1" } },
+            5: { developers: 27, processOpt: 550000, salesStaff: 18, advertising: 400000, priceM1: 640, qtyM1: 8000, priceM2: 640, qtyM2: 200, marketResearch: 20000, decisions: { d5: "1", d6: "1" } },
+            6: { developers: 30, processOpt: 600000, salesStaff: 20, advertising: 500000, priceM1: 660, qtyM1: 9000, priceM2: 660, qtyM2: 300, marketResearch: 20000, decisions: { d7: "1", d8: "1" } },
+            7: { developers: 33, processOpt: 650000, salesStaff: 22, advertising: 550000, priceM1: 680, qtyM1: 10000, priceM2: 680, qtyM2: 500, marketResearch: 20000, decisions: { d9: "1", d10: "1" } },
+            8: { developers: 36, processOpt: 600000, salesStaff: 24, advertising: 600000, priceM1: 700, qtyM1: 10000, priceM2: 700, qtyM2: 800, marketResearch: 20000, decisions: { d9: "1", d10: "1" } }
         }
     },
     {
-        id: 3, name: "V3: Minimum", description: "Alle Parameter bei 20%", type: "screening",
-        hypothesis: "Minimaler Einsatz = Welches Ergebnis?",
+        id: 3, name: "V3: Mehr Werbung", description: "+80% Werbung vs Baseline", type: "screening",
+        hypothesis: "Höhere Bekanntheit durch mehr Werbung",
         phases: {
-            1: { developers: 7, processOpt: 200000, salesStaff: 7, advertising: 150000, priceM1: null, qtyM1: null, priceM2: null, qtyM2: null, marketResearch: null, decisions: { d1: "bootstrapping" } },
-            2: { developers: 8, processOpt: 330000, salesStaff: 8, advertising: 280000, priceM1: 580, qtyM1: 3800, priceM2: null, qtyM2: null, marketResearch: 16000, decisions: { d2: "passau" } },
-            3: { developers: 8, processOpt: 380000, salesStaff: 8, advertising: 280000, priceM1: 606, qtyM1: 4800, priceM2: null, qtyM2: null, marketResearch: 16000, decisions: { d3: "gbr" } },
-            4: { developers: 9, processOpt: 430000, salesStaff: 9, advertising: 430000, priceM1: 608, qtyM1: 5000, priceM2: null, qtyM2: null, marketResearch: 16000, decisions: { d4: "open_source" } },
-            5: { developers: 9, processOpt: 440000, salesStaff: 9, advertising: 440000, priceM1: 600, qtyM1: 5200, priceM2: 600, qtyM2: 120, marketResearch: 16000, decisions: { d5: "option_c", d6: "option_c" } },
-            6: { developers: 10, processOpt: 480000, salesStaff: 10, advertising: 580000, priceM1: 632, qtyM1: 5800, priceM2: 632, qtyM2: 150, marketResearch: 16000, decisions: { d7: "option_c", d8: "option_c" } },
-            7: { developers: 11, processOpt: 480000, salesStaff: 11, advertising: 580000, priceM1: 624, qtyM1: 5800, priceM2: 624, qtyM2: 440, marketResearch: 16000, decisions: { d9: "option_c", d10: "option_c" } },
-            8: { developers: 11, processOpt: 380000, salesStaff: 11, advertising: 580000, priceM1: 624, qtyM1: 1000, priceM2: 624, qtyM2: 800, marketResearch: 16000, decisions: { d11: "option_c", d12: "option_c" } }
+            1: { developers: 10, processOpt: 300000, salesStaff: 10, advertising: 360000, priceM1: null, qtyM1: null, priceM2: null, qtyM2: null, marketResearch: null, decisions: { d1: "1" } },
+            2: { developers: 12, processOpt: 400000, salesStaff: 12, advertising: 450000, priceM1: 580, qtyM1: 5000, priceM2: null, qtyM2: null, marketResearch: 20000, decisions: { d2: "1" } },
+            3: { developers: 14, processOpt: 450000, salesStaff: 14, advertising: 500000, priceM1: 600, qtyM1: 6000, priceM2: null, qtyM2: null, marketResearch: 20000, decisions: { d3: "1" } },
+            4: { developers: 16, processOpt: 500000, salesStaff: 16, advertising: 630000, priceM1: 620, qtyM1: 7000, priceM2: null, qtyM2: null, marketResearch: 20000, decisions: { d4: "1" } },
+            5: { developers: 18, processOpt: 550000, salesStaff: 18, advertising: 720000, priceM1: 640, qtyM1: 8000, priceM2: 640, qtyM2: 200, marketResearch: 20000, decisions: { d5: "1", d6: "1" } },
+            6: { developers: 20, processOpt: 600000, salesStaff: 20, advertising: 900000, priceM1: 660, qtyM1: 9000, priceM2: 660, qtyM2: 300, marketResearch: 20000, decisions: { d7: "1", d8: "1" } },
+            7: { developers: 22, processOpt: 650000, salesStaff: 22, advertising: 1000000, priceM1: 680, qtyM1: 10000, priceM2: 680, qtyM2: 500, marketResearch: 20000, decisions: { d9: "1", d10: "1" } },
+            8: { developers: 24, processOpt: 600000, salesStaff: 24, advertising: 1100000, priceM1: 700, qtyM1: 10000, priceM2: 700, qtyM2: 800, marketResearch: 20000, decisions: { d9: "1", d10: "1" } }
         }
     },
     {
-        id: 4, name: "V4: Premium", description: "Hoher Preis + Hohe Werbung", type: "interaction",
-        hypothesis: "Premium-Positionierung mit Marketing-Push",
+        id: 4, name: "V4: Höherer Preis", description: "+40% Preis vs Baseline", type: "screening",
+        hypothesis: "Premium-Positionierung testet Preiselastizität",
         phases: {
-            1: { developers: 17, processOpt: 500000, salesStaff: 17, advertising: 675000, priceM1: null, qtyM1: null, priceM2: null, qtyM2: null, marketResearch: null, decisions: { d1: "green_climate_fund" } },
-            2: { developers: 20, processOpt: 675000, salesStaff: 20, advertising: 910000, priceM1: 1385, qtyM1: 8000, priceM2: null, qtyM2: null, marketResearch: 25000, decisions: { d2: "muenchen" } },
-            3: { developers: 20, processOpt: 800000, salesStaff: 20, advertising: 910000, priceM1: 1607, qtyM1: 10500, priceM2: null, qtyM2: null, marketResearch: 25000, decisions: { d3: "gmbh" } },
-            4: { developers: 22, processOpt: 925000, salesStaff: 22, advertising: 1585000, priceM1: 1651, qtyM1: 11000, priceM2: null, qtyM2: null, marketResearch: 25000, decisions: { d4: "cloud" } },
-            5: { developers: 22, processOpt: 950000, salesStaff: 22, advertising: 1630000, priceM1: 1650, qtyM1: 11500, priceM2: 1650, qtyM2: 300, marketResearch: 25000, decisions: { d5: "option_a", d6: "option_a" } },
-            6: { developers: 25, processOpt: 1050000, salesStaff: 25, advertising: 2260000, priceM1: 1829, qtyM1: 13000, priceM2: 1829, qtyM2: 375, marketResearch: 25000, decisions: { d7: "option_a", d8: "option_a" } },
-            7: { developers: 27, processOpt: 1050000, salesStaff: 27, advertising: 2260000, priceM1: 1828, qtyM1: 13000, priceM2: 1828, qtyM2: 650, marketResearch: 25000, decisions: { d9: "option_a", d10: "option_a" } },
-            8: { developers: 27, processOpt: 800000, salesStaff: 27, advertising: 2260000, priceM1: 1828, qtyM1: 1000, priceM2: 1828, qtyM2: 1250, marketResearch: 25000, decisions: { d11: "option_a", d12: "option_a" } }
+            1: { developers: 10, processOpt: 300000, salesStaff: 10, advertising: 200000, priceM1: null, qtyM1: null, priceM2: null, qtyM2: null, marketResearch: null, decisions: { d1: "1" } },
+            2: { developers: 12, processOpt: 400000, salesStaff: 12, advertising: 250000, priceM1: 810, qtyM1: 5000, priceM2: null, qtyM2: null, marketResearch: 20000, decisions: { d2: "1" } },
+            3: { developers: 14, processOpt: 450000, salesStaff: 14, advertising: 280000, priceM1: 840, qtyM1: 6000, priceM2: null, qtyM2: null, marketResearch: 20000, decisions: { d3: "1" } },
+            4: { developers: 16, processOpt: 500000, salesStaff: 16, advertising: 350000, priceM1: 870, qtyM1: 7000, priceM2: null, qtyM2: null, marketResearch: 20000, decisions: { d4: "1" } },
+            5: { developers: 18, processOpt: 550000, salesStaff: 18, advertising: 400000, priceM1: 900, qtyM1: 8000, priceM2: 900, qtyM2: 200, marketResearch: 20000, decisions: { d5: "1", d6: "1" } },
+            6: { developers: 20, processOpt: 600000, salesStaff: 20, advertising: 500000, priceM1: 920, qtyM1: 9000, priceM2: 920, qtyM2: 300, marketResearch: 20000, decisions: { d7: "1", d8: "1" } },
+            7: { developers: 22, processOpt: 650000, salesStaff: 22, advertising: 550000, priceM1: 950, qtyM1: 10000, priceM2: 950, qtyM2: 500, marketResearch: 20000, decisions: { d9: "1", d10: "1" } },
+            8: { developers: 24, processOpt: 600000, salesStaff: 24, advertising: 600000, priceM1: 980, qtyM1: 10000, priceM2: 980, qtyM2: 800, marketResearch: 20000, decisions: { d9: "1", d10: "1" } }
         }
     },
     {
-        id: 5, name: "V5: Volumen", description: "Niedriger Preis + Hohe Werbung", type: "interaction",
-        hypothesis: "Massenmarkt durch Penetrationspreis",
+        id: 5, name: "V5: Mehr Prozessopt", description: "+60% Prozessopt vs Baseline", type: "screening",
+        hypothesis: "Effizienz durch höhere Prozessoptimierung",
         phases: {
-            1: { developers: 17, processOpt: 500000, salesStaff: 17, advertising: 675000, priceM1: null, qtyM1: null, priceM2: null, qtyM2: null, marketResearch: null, decisions: { d1: "green_climate_fund" } },
-            2: { developers: 20, processOpt: 675000, salesStaff: 20, advertising: 910000, priceM1: 465, qtyM1: 13600, priceM2: null, qtyM2: null, marketResearch: 25000, decisions: { d2: "muenchen" } },
-            3: { developers: 20, processOpt: 800000, salesStaff: 20, advertising: 910000, priceM1: 463, qtyM1: 18100, priceM2: null, qtyM2: null, marketResearch: 25000, decisions: { d3: "gmbh" } },
-            4: { developers: 22, processOpt: 925000, salesStaff: 22, advertising: 1585000, priceM1: 459, qtyM1: 19000, priceM2: null, qtyM2: null, marketResearch: 25000, decisions: { d4: "cloud" } },
-            5: { developers: 22, processOpt: 950000, salesStaff: 22, advertising: 1630000, priceM1: 450, qtyM1: 19900, priceM2: 450, qtyM2: 540, marketResearch: 25000, decisions: { d5: "option_a", d6: "option_a" } },
-            6: { developers: 25, processOpt: 1050000, salesStaff: 25, advertising: 2260000, priceM1: 461, qtyM1: 22600, priceM2: 461, qtyM2: 675, marketResearch: 25000, decisions: { d7: "option_a", d8: "option_a" } },
-            7: { developers: 27, processOpt: 1050000, salesStaff: 27, advertising: 2260000, priceM1: 452, qtyM1: 22600, priceM2: 452, qtyM2: 930, marketResearch: 25000, decisions: { d9: "option_a", d10: "option_a" } },
-            8: { developers: 27, processOpt: 800000, salesStaff: 27, advertising: 2260000, priceM1: 452, qtyM1: 1000, priceM2: 452, qtyM2: 1850, marketResearch: 25000, decisions: { d11: "option_a", d12: "option_a" } }
+            1: { developers: 10, processOpt: 480000, salesStaff: 10, advertising: 200000, priceM1: null, qtyM1: null, priceM2: null, qtyM2: null, marketResearch: null, decisions: { d1: "1" } },
+            2: { developers: 12, processOpt: 640000, salesStaff: 12, advertising: 250000, priceM1: 580, qtyM1: 5000, priceM2: null, qtyM2: null, marketResearch: 20000, decisions: { d2: "1" } },
+            3: { developers: 14, processOpt: 720000, salesStaff: 14, advertising: 280000, priceM1: 600, qtyM1: 6000, priceM2: null, qtyM2: null, marketResearch: 20000, decisions: { d3: "1" } },
+            4: { developers: 16, processOpt: 800000, salesStaff: 16, advertising: 350000, priceM1: 620, qtyM1: 7000, priceM2: null, qtyM2: null, marketResearch: 20000, decisions: { d4: "1" } },
+            5: { developers: 18, processOpt: 880000, salesStaff: 18, advertising: 400000, priceM1: 640, qtyM1: 8000, priceM2: 640, qtyM2: 200, marketResearch: 20000, decisions: { d5: "1", d6: "1" } },
+            6: { developers: 20, processOpt: 960000, salesStaff: 20, advertising: 500000, priceM1: 660, qtyM1: 9000, priceM2: 660, qtyM2: 300, marketResearch: 20000, decisions: { d7: "1", d8: "1" } },
+            7: { developers: 22, processOpt: 1040000, salesStaff: 22, advertising: 550000, priceM1: 680, qtyM1: 10000, priceM2: 680, qtyM2: 500, marketResearch: 20000, decisions: { d9: "1", d10: "1" } },
+            8: { developers: 24, processOpt: 960000, salesStaff: 24, advertising: 600000, priceM1: 700, qtyM1: 10000, priceM2: 700, qtyM2: 800, marketResearch: 20000, decisions: { d9: "1", d10: "1" } }
         }
     },
     {
-        id: 6, name: "V6: Tech-Power", description: "Max Developer + Max ProcessOpt", type: "interaction",
-        hypothesis: "Volle Entwicklungs-Investition",
+        id: 6, name: "V6: Dev+Werbung", description: "Kombination V2+V3", type: "interaction",
+        hypothesis: "Synergie zwischen Innovation und Marketing",
         phases: {
-            1: { developers: 32, processOpt: 900000, salesStaff: 17, advertising: 375000, priceM1: null, qtyM1: null, priceM2: null, qtyM2: null, marketResearch: null, decisions: { d1: "green_climate_fund" } },
-            2: { developers: 36, processOpt: 1135000, salesStaff: 20, advertising: 550000, priceM1: 925, qtyM1: 8000, priceM2: null, qtyM2: null, marketResearch: 25000, decisions: { d2: "muenchen" } },
-            3: { developers: 36, processOpt: 1360000, salesStaff: 20, advertising: 550000, priceM1: 1035, qtyM1: 10500, priceM2: null, qtyM2: null, marketResearch: 25000, decisions: { d3: "gmbh" } },
-            4: { developers: 41, processOpt: 1585000, salesStaff: 22, advertising: 925000, priceM1: 1055, qtyM1: 11000, priceM2: null, qtyM2: null, marketResearch: 25000, decisions: { d4: "cloud" } },
-            5: { developers: 41, processOpt: 1630000, salesStaff: 22, advertising: 950000, priceM1: 1050, qtyM1: 11500, priceM2: 1050, qtyM2: 300, marketResearch: 25000, decisions: { d5: "option_a", d6: "option_a" } },
-            6: { developers: 45, processOpt: 1810000, salesStaff: 25, advertising: 1300000, priceM1: 1145, qtyM1: 13000, priceM2: 1145, qtyM2: 375, marketResearch: 25000, decisions: { d7: "option_a", d8: "option_a" } },
-            7: { developers: 50, processOpt: 1810000, salesStaff: 27, advertising: 1300000, priceM1: 1140, qtyM1: 13000, priceM2: 1140, qtyM2: 650, marketResearch: 25000, decisions: { d9: "option_a", d10: "option_a" } },
-            8: { developers: 50, processOpt: 1360000, salesStaff: 27, advertising: 1300000, priceM1: 1140, qtyM1: 1000, priceM2: 1140, qtyM2: 1250, marketResearch: 25000, decisions: { d11: "option_a", d12: "option_a" } }
+            1: { developers: 15, processOpt: 300000, salesStaff: 10, advertising: 360000, priceM1: null, qtyM1: null, priceM2: null, qtyM2: null, marketResearch: null, decisions: { d1: "2" } },
+            2: { developers: 18, processOpt: 400000, salesStaff: 12, advertising: 450000, priceM1: 580, qtyM1: 5000, priceM2: null, qtyM2: null, marketResearch: 20000, decisions: { d2: "2" } },
+            3: { developers: 21, processOpt: 450000, salesStaff: 14, advertising: 500000, priceM1: 600, qtyM1: 6000, priceM2: null, qtyM2: null, marketResearch: 20000, decisions: { d3: "2" } },
+            4: { developers: 24, processOpt: 500000, salesStaff: 16, advertising: 630000, priceM1: 620, qtyM1: 7000, priceM2: null, qtyM2: null, marketResearch: 20000, decisions: { d4: "2" } },
+            5: { developers: 27, processOpt: 550000, salesStaff: 18, advertising: 720000, priceM1: 640, qtyM1: 8000, priceM2: 640, qtyM2: 200, marketResearch: 20000, decisions: { d5: "2", d6: "2" } },
+            6: { developers: 30, processOpt: 600000, salesStaff: 20, advertising: 900000, priceM1: 660, qtyM1: 9000, priceM2: 660, qtyM2: 300, marketResearch: 20000, decisions: { d7: "2", d8: "2" } },
+            7: { developers: 33, processOpt: 650000, salesStaff: 22, advertising: 1000000, priceM1: 680, qtyM1: 10000, priceM2: 680, qtyM2: 500, marketResearch: 20000, decisions: { d9: "2", d10: "2" } },
+            8: { developers: 36, processOpt: 600000, salesStaff: 24, advertising: 1100000, priceM1: 700, qtyM1: 10000, priceM2: 700, qtyM2: 800, marketResearch: 20000, decisions: { d9: "2", d10: "2" } }
         }
     },
     {
-        id: 7, name: "V7: Effizienz", description: "Max Developer + Min ProcessOpt", type: "interaction",
-        hypothesis: "Entwickler ohne Budget - funktioniert das?",
+        id: 7, name: "V7: Preis+Werbung", description: "Kombination V3+V4", type: "interaction",
+        hypothesis: "Premium mit starkem Marketing",
         phases: {
-            1: { developers: 32, processOpt: 100000, salesStaff: 17, advertising: 375000, priceM1: null, qtyM1: null, priceM2: null, qtyM2: null, marketResearch: null, decisions: { d1: "green_climate_fund" } },
-            2: { developers: 36, processOpt: 215000, salesStaff: 20, advertising: 550000, priceM1: 925, qtyM1: 8000, priceM2: null, qtyM2: null, marketResearch: 25000, decisions: { d2: "muenchen" } },
-            3: { developers: 36, processOpt: 240000, salesStaff: 20, advertising: 550000, priceM1: 1035, qtyM1: 10500, priceM2: null, qtyM2: null, marketResearch: 25000, decisions: { d3: "gmbh" } },
-            4: { developers: 41, processOpt: 265000, salesStaff: 22, advertising: 925000, priceM1: 1055, qtyM1: 11000, priceM2: null, qtyM2: null, marketResearch: 25000, decisions: { d4: "cloud" } },
-            5: { developers: 41, processOpt: 270000, salesStaff: 22, advertising: 950000, priceM1: 1050, qtyM1: 11500, priceM2: 1050, qtyM2: 300, marketResearch: 25000, decisions: { d5: "option_a", d6: "option_a" } },
-            6: { developers: 45, processOpt: 290000, salesStaff: 25, advertising: 1300000, priceM1: 1145, qtyM1: 13000, priceM2: 1145, qtyM2: 375, marketResearch: 25000, decisions: { d7: "option_a", d8: "option_a" } },
-            7: { developers: 50, processOpt: 290000, salesStaff: 27, advertising: 1300000, priceM1: 1140, qtyM1: 13000, priceM2: 1140, qtyM2: 650, marketResearch: 25000, decisions: { d9: "option_a", d10: "option_a" } },
-            8: { developers: 50, processOpt: 240000, salesStaff: 27, advertising: 1300000, priceM1: 1140, qtyM1: 1000, priceM2: 1140, qtyM2: 1250, marketResearch: 25000, decisions: { d11: "option_a", d12: "option_a" } }
+            1: { developers: 10, processOpt: 300000, salesStaff: 10, advertising: 360000, priceM1: null, qtyM1: null, priceM2: null, qtyM2: null, marketResearch: null, decisions: { d1: "2" } },
+            2: { developers: 12, processOpt: 400000, salesStaff: 12, advertising: 450000, priceM1: 810, qtyM1: 5000, priceM2: null, qtyM2: null, marketResearch: 20000, decisions: { d2: "2" } },
+            3: { developers: 14, processOpt: 450000, salesStaff: 14, advertising: 500000, priceM1: 840, qtyM1: 6000, priceM2: null, qtyM2: null, marketResearch: 20000, decisions: { d3: "2" } },
+            4: { developers: 16, processOpt: 500000, salesStaff: 16, advertising: 630000, priceM1: 870, qtyM1: 7000, priceM2: null, qtyM2: null, marketResearch: 20000, decisions: { d4: "2" } },
+            5: { developers: 18, processOpt: 550000, salesStaff: 18, advertising: 720000, priceM1: 900, qtyM1: 8000, priceM2: 900, qtyM2: 200, marketResearch: 20000, decisions: { d5: "2", d6: "2" } },
+            6: { developers: 20, processOpt: 600000, salesStaff: 20, advertising: 900000, priceM1: 920, qtyM1: 9000, priceM2: 920, qtyM2: 300, marketResearch: 20000, decisions: { d7: "2", d8: "2" } },
+            7: { developers: 22, processOpt: 650000, salesStaff: 22, advertising: 1000000, priceM1: 950, qtyM1: 10000, priceM2: 950, qtyM2: 500, marketResearch: 20000, decisions: { d9: "2", d10: "2" } },
+            8: { developers: 24, processOpt: 600000, salesStaff: 24, advertising: 1100000, priceM1: 980, qtyM1: 10000, priceM2: 980, qtyM2: 800, marketResearch: 20000, decisions: { d9: "2", d10: "2" } }
         }
     },
     {
-        id: 8, name: "V8: Vertrieb", description: "Max Sales + Max Werbung", type: "interaction",
-        hypothesis: "Vertriebsfokus ohne Entwicklung",
+        id: 8, name: "V8: Entscheidung 3", description: "Baseline mit Entscheidung 3", type: "interaction",
+        hypothesis: "Effekt der dritten strategischen Option",
         phases: {
-            1: { developers: 17, processOpt: 500000, salesStaff: 32, advertising: 675000, priceM1: null, qtyM1: null, priceM2: null, qtyM2: null, marketResearch: null, decisions: { d1: "green_climate_fund" } },
-            2: { developers: 20, processOpt: 675000, salesStaff: 36, advertising: 910000, priceM1: 925, qtyM1: 8000, priceM2: null, qtyM2: null, marketResearch: 25000, decisions: { d2: "muenchen" } },
-            3: { developers: 20, processOpt: 800000, salesStaff: 36, advertising: 910000, priceM1: 1035, qtyM1: 10500, priceM2: null, qtyM2: null, marketResearch: 25000, decisions: { d3: "gmbh" } },
-            4: { developers: 22, processOpt: 925000, salesStaff: 41, advertising: 1585000, priceM1: 1055, qtyM1: 11000, priceM2: null, qtyM2: null, marketResearch: 25000, decisions: { d4: "cloud" } },
-            5: { developers: 22, processOpt: 950000, salesStaff: 41, advertising: 1630000, priceM1: 1050, qtyM1: 11500, priceM2: 1050, qtyM2: 300, marketResearch: 25000, decisions: { d5: "option_a", d6: "option_a" } },
-            6: { developers: 25, processOpt: 1050000, salesStaff: 45, advertising: 2260000, priceM1: 1145, qtyM1: 13000, priceM2: 1145, qtyM2: 375, marketResearch: 25000, decisions: { d7: "option_a", d8: "option_a" } },
-            7: { developers: 27, processOpt: 1050000, salesStaff: 50, advertising: 2260000, priceM1: 1140, qtyM1: 13000, priceM2: 1140, qtyM2: 650, marketResearch: 25000, decisions: { d9: "option_a", d10: "option_a" } },
-            8: { developers: 27, processOpt: 800000, salesStaff: 50, advertising: 2260000, priceM1: 1140, qtyM1: 1000, priceM2: 1140, qtyM2: 1250, marketResearch: 25000, decisions: { d11: "option_a", d12: "option_a" } }
+            1: { developers: 10, processOpt: 300000, salesStaff: 10, advertising: 200000, priceM1: null, qtyM1: null, priceM2: null, qtyM2: null, marketResearch: null, decisions: { d1: "3" } },
+            2: { developers: 12, processOpt: 400000, salesStaff: 12, advertising: 250000, priceM1: 580, qtyM1: 5000, priceM2: null, qtyM2: null, marketResearch: 20000, decisions: { d2: "3" } },
+            3: { developers: 14, processOpt: 450000, salesStaff: 14, advertising: 280000, priceM1: 600, qtyM1: 6000, priceM2: null, qtyM2: null, marketResearch: 20000, decisions: { d3: "3" } },
+            4: { developers: 16, processOpt: 500000, salesStaff: 16, advertising: 350000, priceM1: 620, qtyM1: 7000, priceM2: null, qtyM2: null, marketResearch: 20000, decisions: { d4: "3" } },
+            5: { developers: 18, processOpt: 550000, salesStaff: 18, advertising: 400000, priceM1: 640, qtyM1: 8000, priceM2: 640, qtyM2: 200, marketResearch: 20000, decisions: { d5: "3", d6: "3" } },
+            6: { developers: 20, processOpt: 600000, salesStaff: 20, advertising: 500000, priceM1: 660, qtyM1: 9000, priceM2: 660, qtyM2: 300, marketResearch: 20000, decisions: { d7: "3", d8: "3" } },
+            7: { developers: 22, processOpt: 650000, salesStaff: 22, advertising: 550000, priceM1: 680, qtyM1: 10000, priceM2: 680, qtyM2: 500, marketResearch: 20000, decisions: { d9: "3", d10: "3" } },
+            8: { developers: 24, processOpt: 600000, salesStaff: 24, advertising: 600000, priceM1: 700, qtyM1: 10000, priceM2: 700, qtyM2: 800, marketResearch: 20000, decisions: { d9: "3", d10: "3" } }
         }
     },
     {
-        id: 9, name: "V9: Alternative", description: "Andere strategische Entscheidungen", type: "strategic",
-        hypothesis: "Testen: Investor, Berlin, AG, Open Source",
+        id: 9, name: "V9: Alles hoch", description: "Maximale Investition überall", type: "optimization",
+        hypothesis: "Vollgas-Strategie",
         phases: {
-            1: { developers: 17, processOpt: 500000, salesStaff: 17, advertising: 375000, priceM1: null, qtyM1: null, priceM2: null, qtyM2: null, marketResearch: null, decisions: { d1: "investor" } },
-            2: { developers: 20, processOpt: 675000, salesStaff: 20, advertising: 550000, priceM1: 925, qtyM1: 8000, priceM2: null, qtyM2: null, marketResearch: 25000, decisions: { d2: "berlin" } },
-            3: { developers: 20, processOpt: 800000, salesStaff: 20, advertising: 550000, priceM1: 1035, qtyM1: 10500, priceM2: null, qtyM2: null, marketResearch: 25000, decisions: { d3: "ag" } },
-            4: { developers: 22, processOpt: 925000, salesStaff: 22, advertising: 925000, priceM1: 1055, qtyM1: 11000, priceM2: null, qtyM2: null, marketResearch: 25000, decisions: { d4: "open_source" } },
-            5: { developers: 22, processOpt: 950000, salesStaff: 22, advertising: 950000, priceM1: 1050, qtyM1: 11500, priceM2: 1050, qtyM2: 300, marketResearch: 25000, decisions: { d5: "option_b", d6: "option_c" } },
-            6: { developers: 25, processOpt: 1050000, salesStaff: 25, advertising: 1300000, priceM1: 1145, qtyM1: 13000, priceM2: 1145, qtyM2: 375, marketResearch: 25000, decisions: { d7: "option_b", d8: "option_c" } },
-            7: { developers: 27, processOpt: 1050000, salesStaff: 27, advertising: 1300000, priceM1: 1140, qtyM1: 13000, priceM2: 1140, qtyM2: 650, marketResearch: 25000, decisions: { d9: "option_b", d10: "option_c" } },
-            8: { developers: 27, processOpt: 800000, salesStaff: 27, advertising: 1300000, priceM1: 1140, qtyM1: 1000, priceM2: 1140, qtyM2: 1250, marketResearch: 25000, decisions: { d11: "option_b", d12: "option_c" } }
+            1: { developers: 20, processOpt: 600000, salesStaff: 20, advertising: 500000, priceM1: null, qtyM1: null, priceM2: null, qtyM2: null, marketResearch: null, decisions: { d1: "2" } },
+            2: { developers: 25, processOpt: 800000, salesStaff: 25, advertising: 700000, priceM1: 750, qtyM1: 8000, priceM2: null, qtyM2: null, marketResearch: 30000, decisions: { d2: "2" } },
+            3: { developers: 28, processOpt: 900000, salesStaff: 28, advertising: 750000, priceM1: 800, qtyM1: 10000, priceM2: null, qtyM2: null, marketResearch: 30000, decisions: { d3: "2" } },
+            4: { developers: 32, processOpt: 1000000, salesStaff: 32, advertising: 1000000, priceM1: 850, qtyM1: 12000, priceM2: null, qtyM2: null, marketResearch: 30000, decisions: { d4: "2" } },
+            5: { developers: 35, processOpt: 1100000, salesStaff: 35, advertising: 1200000, priceM1: 900, qtyM1: 14000, priceM2: 900, qtyM2: 400, marketResearch: 30000, decisions: { d5: "2", d6: "2" } },
+            6: { developers: 38, processOpt: 1200000, salesStaff: 38, advertising: 1500000, priceM1: 950, qtyM1: 16000, priceM2: 950, qtyM2: 500, marketResearch: 30000, decisions: { d7: "2", d8: "2" } },
+            7: { developers: 42, processOpt: 1300000, salesStaff: 42, advertising: 1700000, priceM1: 1000, qtyM1: 18000, priceM2: 1000, qtyM2: 700, marketResearch: 30000, decisions: { d9: "2", d10: "2" } },
+            8: { developers: 45, processOpt: 1100000, salesStaff: 45, advertising: 1800000, priceM1: 1050, qtyM1: 18000, priceM2: 1050, qtyM2: 1200, marketResearch: 30000, decisions: { d9: "2", d10: "2" } }
         }
     },
     {
